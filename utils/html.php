@@ -12,3 +12,7 @@ function html_street_lookup($name, $intersection = FALSE) {
                         new Ajax.Autocompleter("' . $name . '_intersection", "' . $name . '_intersection_options", "street_intersection_lookup.php", { "callback": function(element, params) { return params + "&street=" + encodeURI($("' . $name . '").value); }, "paramName": "street_intersection" });
                 </script>');
 }
+
+function html_utf8($str) {
+	return htmlentities($str, ENT_COMPAT, 'UTF-8');
+}

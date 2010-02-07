@@ -1,6 +1,7 @@
 <?php
 function get_node_from_street_names($street1, $street2) {
-	$from_node_query = mysql_query('SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.name = "' . mysql_real_escape_string($street1) . '" AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.name = "' . mysql_real_escape_string($street2) . '")') or die(mysql_error());
+var_dump($a = func_get_args());die;
+	$from_node_query = mysql_query('SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.full_name = "' . mysql_real_escape_string($street1) . '" AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.full_name = "' . mysql_real_escape_string($street2) . '")') or die(mysql_error());
 	if (mysql_num_rows($from_node_query) == 0) return null;
 	return mysql_fetch_assoc($from_node_query);
 }
