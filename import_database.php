@@ -17,18 +17,20 @@ mysql_query('CREATE TABLE way_nodes ( way_id BIGINT(20) UNSIGNED NOT NULL, node_
 mysql_query('CREATE TABLE railway ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, UNIQUE KEY way_id (way_id) )');
 //mysql_query('CREATE TABLE way_tags ( way_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY way_key (way_id, field), INDEX field (field), INDEX way_id (way_id)  )');
 
-mysql_query('DROP TABLE relation');
+mysql_query('DROP TABLE train');
+mysql_query('DROP TABLE bus');
 mysql_query('DROP TABLE relation_nodes');
 mysql_query('DROP TABLE relation_ways');
 //mysql_query('DROP TABLE relation_tags');
-mysql_query('CREATE TABLE relation ( id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, ref VARCHAR(255), name VARCHAR(255), type INT(2) UNSIGNED )'); 
+mysql_query('CREATE TABLE train ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), operator VARCHAR(255), train_from VARCHAR(255), train_to VARCHAR(255) )'); 
+mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255) )'); 
 mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL )');
 mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL )');
 //mysql_query('CREATE TABLE relation_tags ( relation_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY relation_key (relation_id, field, INDEX field (field), INDEX relation_id (relation_id)  )');
 
 mysql_query('DROP TABLE street');
 mysql_query('DROP TABLE street_suburbs');
-mysql_query('CREATE TABLE street ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) )'); // street is an entity we create, so it must be autoincrement unlink ways, nodes and relations
+mysql_query('CREATE TABLE street ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) )'); // street is an entity we create, so it must be autoincrement unlike ways, nodes and relations
 mysql_query('CREATE TABLE street_suburbs ( street_id BIGINT(20), suburb_id BIGINT(20) )');
 
 $data = file_get_contents('sample');
@@ -103,6 +105,42 @@ foreach ($simplexml as $node) {
 				if ($railway !== NULL) mysql_query('INSERT INTO railway (way_id) VALUES (' . $way_id . ')');
 				foreach ($nodes as $node)
 					mysql_query('INSERT INTO way_nodes (way_id, node_id) VALUES (' . $way_id . ', ' . $node . ')');
+			}
+		}
+	} else if ($node->getName() == 'relation') {
+		$relation_id = NULL;
+                foreach ($node->attributes() as $key => $value) {
+                        if ($key == 'id') $relation_id = $value;
+                }
+		if ($relation_id !== NULL) {
+			$ways = $nodes = array();
+			$route = NULL;
+			$name = $operator = $from = $to = $ref = '';
+                        foreach ($node->children() as $child) {
+                                if ($child->getName() == 'member') {
+					$ref = $type = NULL;
+                                        foreach ($child->attributes() as $key => $value) {
+                                                if ($key == 'ref') $ref = (string)$value;
+                                                else if ($key == 'type') $type = (string)$value;
+					}
+					if ($ref !== NULL && $type !== NULL && in_array($type, array('way', 'node'))) ${$type . 's'}[] = $ref;
+                                } else if ($child->getName() == 'tag') {
+					$k = $v = NULL;
+					foreach ($child->attributes() as $key => $value) {
+						${$key} = (string)$value;
+					}
+					if ($k !== NULL && $v !== NULL && in_array($k, array('ref', 'name', 'operator', 'route', 'from', 'to'))) ${$k} = $v;
+				}
+			}
+			if ($route == 'train' || $route == 'bus') {
+				if ($route == 'train')
+					mysql_query('INSERT INTO train (relation_id, name, operator, train_from, train_to) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($from) . '", "' . mysql_real_escape_string($to) . '")');
+				else if ($route == 'bus')
+					mysql_query('INSERT INTO bus (relation_id, name, operator, ref) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($ref) . '")');
+				foreach ($ways as $way)
+					mysql_query('INSERT INTO relation_ways (relation_id, way_id) VALUES (' . $relation_id . ', ' . $way . ')');
+				foreach ($nodes as $node)
+					mysql_query('INSERT INTO relation_nodes (relation_id, node_id) VALUES (' . $relation_id . ', ' . $node . ')');
 			}
 		}
 	}
