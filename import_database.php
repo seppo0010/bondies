@@ -27,7 +27,7 @@ mysql_query('DROP TABLE relation_ways');
 mysql_query('CREATE TABLE train ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), operator VARCHAR(255), train_from VARCHAR(255), train_to VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
 mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
 mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL, ordering INT(1) UNSIGNED ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 //mysql_query('CREATE TABLE relation_tags ( relation_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY relation_key (relation_id, field, INDEX field (field), INDEX relation_id (relation_id)  )');
 
 mysql_query('DROP TABLE street');
@@ -146,8 +146,9 @@ foreach ($simplexml as $node) {
 					mysql_query('INSERT INTO train (relation_id, name, operator, train_from, train_to) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($from) . '", "' . mysql_real_escape_string($to) . '")');
 				else if ($route == 'bus')
 					mysql_query('INSERT INTO bus (relation_id, name, operator, ref) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($ref) . '")');
+				$i = 0;
 				foreach ($ways as $way)
-					mysql_query('INSERT INTO relation_ways (relation_id, way_id) VALUES (' . $relation_id . ', ' . $way . ')');
+					mysql_query('INSERT INTO relation_ways (relation_id, way_id, ordering) VALUES (' . $relation_id . ', ' . $way . ', ' . ++$i . ')');
 				foreach ($nodes as $node)
 					mysql_query('INSERT INTO relation_nodes (relation_id, node_id) VALUES (' . $relation_id . ', ' . $node . ')');
 			}

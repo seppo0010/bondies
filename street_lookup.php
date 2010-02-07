@@ -5,6 +5,6 @@ $streets = mysql_query('SELECT street.id, street.full_name FROM street WHERE str
 ?>
 <ul>
 <?php while ($street = mysql_fetch_assoc($streets)) { ?>
-<li><?php  echo html_utf8($street['full_name']); ?></li>
+<li id="street_<?php echo $street['id']; ?>"><?php  echo html_utf8($street['full_name']); ?></li>
 <?php } ?>
 </ul>

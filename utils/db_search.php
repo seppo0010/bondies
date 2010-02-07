@@ -1,7 +1,12 @@
 <?php
 function get_node_from_street_names($street1, $street2) {
-var_dump($a = func_get_args());die;
 	$from_node_query = mysql_query('SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.full_name = "' . mysql_real_escape_string($street1) . '" AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.full_name = "' . mysql_real_escape_string($street2) . '")') or die(mysql_error());
+	if (mysql_num_rows($from_node_query) == 0) return null;
+	return mysql_fetch_assoc($from_node_query);
+}
+
+function get_node_from_street_ids($street1, $street2) {
+	$from_node_query = mysql_query('SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = "' . mysql_real_escape_string($street1) . '" AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = "' . mysql_real_escape_string($street2) . '")') or die(mysql_error());
 	if (mysql_num_rows($from_node_query) == 0) return null;
 	return mysql_fetch_assoc($from_node_query);
 }
@@ -40,7 +45,7 @@ function get_railway_ways($railway_id) {
 }
 
 function get_buses_near_node($lat, $lon, $max_distance) {
-	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN relation_ways ON way_nodes.way_id = relation_ways.way_id WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
+	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, relation_ways.ordering FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN relation_ways ON way_nodes.way_id = relation_ways.way_id WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
 }
 
 function get_bus_info($bus_id) {

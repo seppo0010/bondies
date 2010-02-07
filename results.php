@@ -2,9 +2,9 @@
 require_once 'boot.php';
 require_once 'utils/db_search.php';
 require_once 'utils/grammar.php';
-$from_node = get_node_from_street_names($_REQUEST['from'], $_REQUEST['from_intersection']);
+$from_node = get_node_from_street_ids($_REQUEST['from_id'], $_REQUEST['from_intersection_id']);
 if ($from_node == null) die('Unable to find origin intersection');
-$to_node = get_node_from_street_names($_REQUEST['to'], $_REQUEST['to_intersection']);
+$to_node = get_node_from_street_ids($_REQUEST['to_id'], $_REQUEST['to_intersection_id']);
 if ($to_node == null) die('Unable to find destination intersection');
 
 $results = array(); // each result MUST have: ways, name, from_node, to_node, walk_distance, type (bus,train,railway). MIGHT have: operator
@@ -24,6 +24,7 @@ foreach ($types as $type) {
 		$to_railways_id   = array_keys($to_railways  );
 		$common_railways_id = array_intersect($from_railways_id, $to_railways_id);
 		foreach ($common_railways_id as $railway_id) {
+			if (isset($from_railways[$railway_id]['node']['ordering']) && isset($to_railways[$railway_id]['node']['ordering']) && $from_railways[$railway_id]['node']['ordering'] > $to_railways[$railway_id]['node']['ordering']) continue;
 			$temp = 'get_' . $type . '_info';
 			$railway_info = $temp($railway_id);
 			$temp = 'get_' . $type . '_ways';
