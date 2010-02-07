@@ -1,7 +1,7 @@
 <?php
 require_once 'boot.php';
 require_once 'utils/html.php';
-$street_nodes = mysql_query('SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = "' . mysql_real_escape_string($_REQUEST['street_id']) . '"') or die(mysql_error());
+$street_nodes = mysql_query('SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = "' . mysql_real_escape_string($_REQUEST['street_id']) . '"');
 $street_nodes_id = array();
 while ($street_node = mysql_fetch_assoc($street_nodes))
 	$street_nodes_id[] = $street_node['id'];

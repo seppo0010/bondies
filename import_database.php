@@ -20,11 +20,13 @@ mysql_query('CREATE TABLE railway_halts ( node_id BIGINT(20) PRIMARY KEY, name V
 //mysql_query('CREATE TABLE way_tags ( way_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY way_key (way_id, field), INDEX field (field), INDEX way_id (way_id)  )');
 
 mysql_query('DROP TABLE train');
+mysql_query('DROP TABLE train_stations');
 mysql_query('DROP TABLE bus');
 mysql_query('DROP TABLE relation_nodes');
 mysql_query('DROP TABLE relation_ways');
 //mysql_query('DROP TABLE relation_tags');
-mysql_query('CREATE TABLE train ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), operator VARCHAR(255), train_from VARCHAR(255), train_to VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
+mysql_query('CREATE TABLE train ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, operator VARCHAR(255), UNIQUE KEY way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE train_stations ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
 mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL, ordering INT(1) UNSIGNED ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
@@ -70,6 +72,8 @@ foreach ($simplexml as $node) {
 			if (isset($tags['place']) && $tags['place'] == 'suburb' && isset($tags['name'])) {
 				$suburbs[$node_id] = array($lat, $lon);
 				mysql_query('INSERT INTO suburb (node_id, name, is_in) VALUES (' . $node_id . ',"' . mysql_real_escape_string($tags['name']) . '", "' . mysql_real_escape_string($tags['is_in']) . '")');
+			} elseif (isset($tags['railway']) && $tags['railway'] == 'station' && isset($tags['name'])) {
+				mysql_query('INSERT INTO train_stations (node_id, name) VALUES (' . $node_id . ', "' . mysql_real_escape_string($tags['name']) . '")');
 			} elseif (isset($tags['railway']) && $tags['railway'] == 'halt' && isset($tags['name'])) {
 				mysql_query('INSERT INTO railway_halts (node_id, name) VALUES (' . $node_id . ', "' . mysql_real_escape_string($tags['name']) . '")');
 			}
@@ -82,10 +86,12 @@ foreach ($simplexml as $node) {
 		if ($way_id !== NULL) {
 			$is_highway = FALSE;
 			$railway = NULL;
+			$train = NULL;
 			$operator = "";
 			$name = NULL;
 			$nodes = array();
 			foreach ($node->children() as $child) {
+				$is_subway = $is_rail = FALSE;
 				if ($child->getName() == 'nd') {
 					foreach ($child->attributes() as $key => $value) 
 						if ($key == 'ref')
@@ -95,6 +101,7 @@ foreach ($simplexml as $node) {
 					$v = NULL;
 					$is_name = FALSE;
 					$is_railway = FALSE;
+					$is_train = FALSE;
 					$is_operator = FALSE;
 					foreach ($child->attributes() as $key => $value) 
 					{
@@ -104,14 +111,19 @@ foreach ($simplexml as $node) {
 						if ($key == 'v') $v = $value;
 						if ($key == 'k' && $value == 'railway') $is_railway = TRUE;
 					}
+					if ($is_railway)
+						if ($v == 'subway') $is_subway = TRUE;
+						else if ($v == 'rail') $is_rail = TRUE;
 				}
 				if ($is_operator) $operator = $v;
-				if ($is_railway) $railway = $v;
+				if ($is_subway) $railway = $v;
+				if ($is_rail) $train = $v;
 				if ($is_name) $name = $v;
 			}
-			if (($is_highway || $railway !== NULL) && $name !== NULL && count($nodes) > 0) {
+			if (($is_highway || $railway !== NULL || $train !== NULL) && $name !== NULL && count($nodes) > 0) {
 				mysql_query('INSERT INTO way (id, name) VALUES (' . $way_id . ', "' . mysql_real_escape_string($name) . '")');
 				if ($railway !== NULL) mysql_query('INSERT INTO railway (way_id, operator) VALUES (' . $way_id . ', "' . $operator . '")');
+				if ($train !== NULL) mysql_query('INSERT INTO train (way_id, operator) VALUES (' . $way_id . ', "' . $operator . '")');
 				foreach ($nodes as $node)
 					mysql_query('INSERT INTO way_nodes (way_id, node_id) VALUES (' . $way_id . ', ' . $node . ')');
 			}
@@ -141,11 +153,8 @@ foreach ($simplexml as $node) {
 					if ($k !== NULL && $v !== NULL && in_array($k, array('ref', 'name', 'operator', 'route', 'from', 'to'))) ${$k} = $v;
 				}
 			}
-			if ($route == 'train' || $route == 'bus') {
-				if ($route == 'train')
-					mysql_query('INSERT INTO train (relation_id, name, operator, train_from, train_to) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($from) . '", "' . mysql_real_escape_string($to) . '")');
-				else if ($route == 'bus')
-					mysql_query('INSERT INTO bus (relation_id, name, operator, ref) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($ref) . '")');
+			if ($route == 'bus') {
+				mysql_query('INSERT INTO bus (relation_id, name, operator, ref) VALUES (' . $relation_id . ', "' . mysql_real_escape_string($name) . '", "' . mysql_real_escape_string($operator) . '", "' . mysql_real_escape_string($ref) . '")');
 				$i = 0;
 				foreach ($ways as $way)
 					mysql_query('INSERT INTO relation_ways (relation_id, way_id, ordering) VALUES (' . $relation_id . ', ' . $way . ', ' . ++$i . ')');
@@ -238,7 +247,7 @@ while (true) {
 					if (count($street_suburbs_id) < 4)
 						$full_name .= '(' . implode(', ', $suburb_names) . '), ';
 					$full_name .= '(' . implode(', ', $is_in) . ')';
-					mysql_query('UPDATE street SET full_name = "' . mysql_real_escape_string($full_name) . '" WHERE id = ' . $street_id) or die(mysql_error());
+					mysql_query('UPDATE street SET full_name = "' . mysql_real_escape_string($full_name) . '" WHERE id = ' . $street_id);
 				}
 
 			}
