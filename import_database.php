@@ -1,5 +1,5 @@
 <?php
-require 'boot.php';
+require_once 'boot.php';
 
 mysql_query('DROP TABLE node');
 mysql_query('DROP TABLE node_halt');

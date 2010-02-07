@@ -1,5 +1,5 @@
 <?php
-require 'boot.php';
+require_once 'boot.php';
 $street_nodes = mysql_query('SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.name = "' . mysql_real_escape_string($_REQUEST['street']) . '"') or die(mysql_error());
 $street_nodes_id = array();
 while ($street_node = mysql_fetch_assoc($street_nodes))

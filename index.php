@@ -1,5 +1,5 @@
 <?php
-require 'utils/html.php';
+require_once 'utils/html.php';
 ?>
 <html>
 <head>
