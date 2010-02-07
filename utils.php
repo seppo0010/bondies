@@ -2,7 +2,7 @@
 function is_node_near_nodes($node, $nodes) {
 	foreach ($nodes as $_node) {
 		$distance = calculate_distance($node['lat'], $node['lon'], $_node['lat'], $_node['lon']);
-		if ($distance < 0.1) return TRUE;
+		if ($distance < 0.5) return TRUE;
 	}
 	return FALSE;
 }

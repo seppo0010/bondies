@@ -1,0 +1,23 @@
+<html>
+<head>
+<title>Bondies</title>
+<script type="text/javascript" src="javascript/prototype/prototype.js"></script>
+<script type="text/javascript" src="javascript/scriptaculous/effects.js"></script>
+<script type="text/javascript" src="javascript/scriptaculous/controls.js"></script>
+</head>
+<body>
+<input type="text" name="street" id="street" />
+<div id="street_options">
+</div>
+<script type="text/javascript">
+new Ajax.Autocompleter('street', 'street_options', 'street_lookup.php', {});
+</script>
+<input type="text" name="street_intersection" id="street_intersection" />
+<div id="street_intersection_options">
+</div>
+<script type="text/javascript">
+new Ajax.Autocompleter('street_intersection', 'street_intersection_options', 'street_intersection_lookup.php', { 'callback': function(element, params) { return params + '&street=' + encodeURI($('street').value); } });
+</script>
+
+</body>
+</html>
