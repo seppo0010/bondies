@@ -10,9 +10,11 @@ mysql_query('CREATE TABLE suburb ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(
 
 mysql_query('DROP TABLE way');
 mysql_query('DROP TABLE way_nodes');
+mysql_query('DROP TABLE railway');
 //mysql_query('DROP TABLE way_tags');
-mysql_query('CREATE TABLE way ( id BIGINT(20) unsigned not null PRIMARY KEY, name VARCHAR(255), suburb_id BIGINT(20) UNSIGNED DEFAULT NULL, street_id BIGINT(20), INDEX name (name) )');
+mysql_query('CREATE TABLE way ( id BIGINT(20) unsigned not null PRIMARY KEY, name VARCHAR(255), street_id BIGINT(20), INDEX name (name) )');
 mysql_query('CREATE TABLE way_nodes ( way_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL )');
+mysql_query('CREATE TABLE railway ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, UNIQUE KEY way_id (way_id) )');
 //mysql_query('CREATE TABLE way_tags ( way_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY way_key (way_id, field), INDEX field (field), INDEX way_id (way_id)  )');
 
 mysql_query('DROP TABLE relation');
@@ -26,7 +28,7 @@ mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NU
 
 mysql_query('DROP TABLE street');
 mysql_query('DROP TABLE street_suburbs');
-mysql_query('CREATE TABLE street ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) )') or die(mysql_error()); // street is an entity we create, so it must be autoincrement unlink ways, nodes and relations
+mysql_query('CREATE TABLE street ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) )'); // street is an entity we create, so it must be autoincrement unlink ways, nodes and relations
 mysql_query('CREATE TABLE street_suburbs ( street_id BIGINT(20), suburb_id BIGINT(20) )');
 
 $data = file_get_contents('sample');
@@ -48,14 +50,6 @@ foreach ($simplexml as $node) {
 //			foreach ($extradata as $key => $value) {
 //				mysql_query('INSERT INTO node_tags (node_id, field, value) VALUES (' . $node_id . ', "' . mysql_real_escape_string($key) . '", "' . mysql_real_escape_string($value) . '")');
 //			}
-/*
-  <node id="349329661" lat="-34.6213108" lon="-58.3708066" version="1" changeset="635452" user="Geogast" uid="51045" visible="true" timestamp="2009-02-22T23:12:53Z">
-    <tag k="name" v="San Telmo"/>
-    <tag k="place" v="suburb"/>
-    <tag k="created_by" v="Potlatch 0.10f"/>
-    <tag k="is_in" v="Capital Federal, Buenos Aires"/>
-  </node>
-*/
 			$tags = array();
 			foreach ($node->children() as $tag) {
 				if ($tag->getName() == "tag") {
@@ -79,81 +73,100 @@ foreach ($simplexml as $node) {
 			if ($key == 'id') $way_id = $value;
 		}
 		if ($way_id !== NULL) {
+			$is_highway = FALSE;
+			$railway = NULL;
 			$name = NULL;
 			$nodes = array();
 			foreach ($node->children() as $child) {
 				if ($child->getName() == 'nd') {
 					foreach ($child->attributes() as $key => $value) 
 						if ($key == 'ref')
-							$nodes[] = $value;
+							$nodes[] = (string)$value;
 				}
 				else if ($child->getName() == 'tag') {
 					$v = NULL;
 					$is_name = FALSE;
+					$is_railway = FALSE;
 					foreach ($child->attributes() as $key => $value) 
 					{
+						if ($key == 'k' && $value == 'highway') $is_highway = TRUE;
 						if ($key == 'k' && $value == 'name') $is_name = TRUE;
 						if ($key == 'v') $v = $value;
+						if ($key == 'k' && $value == 'railway') $is_railway = TRUE;
 					}
-					if ($is_name) $name = $v;
 				}
+				if ($is_railway) $railway = $v;
+				if ($is_name) $name = $v;
 			}
-			if ($name !== NULL && count($nodes) > 0) {
+			if (($is_highway || $railway !== NULL) && $name !== NULL && count($nodes) > 0) {
 				mysql_query('INSERT INTO way (id, name) VALUES (' . $way_id . ', "' . mysql_real_escape_string($name) . '")');
+				if ($railway !== NULL) mysql_query('INSERT INTO railway (way_id) VALUES (' . $way_id . ')');
 				foreach ($nodes as $node)
-					mysql_query('INSERT INTO way_nodes (way_id, node_id) VALUES (' . $way_id . ', ' . $node_id . ')');
+					mysql_query('INSERT INTO way_nodes (way_id, node_id) VALUES (' . $way_id . ', ' . $node . ')');
 			}
 		}
 	}
 }
 
 while (true) {
-	$nodes = mysql_query('SELECT id, lat, lon FROM node WHERE suburb_id IS NULL LIMIT 500');
-	if (mysql_num_rows($nodes) == 0) break;
-	while ($node = mysql_fetch_assoc($nodes)) {
-		$min_distance = $node_suburb_id = -1;
-		foreach ($suburbs as $suburb_id => $coords) {
-			$distance = ($coords[0] - $nodes['lat']) * ($coords[0] - $nodes['lat']) + ($coords[1] - $nodes['lon']) * ($coords[1] - $nodes['lon']);
-			if (($min_distance == -1 && $node_suburb_id == -1) || $distance < $min_distance) {
-				$min_distance = $distance;
-				$node_suburb_id = $suburb_id;
-			}
-		}
-		mysql_query('UPDATE node SET suburb_id = ' . $node_suburb_id . ' WHERE id = ' . $node['id']) or die(mysql_error());
-	}
-}
-while (true) {
-	$ways = mysql_query('SELECT id, name, suburb_id FROM way WHERE street_id IS NULL ORDER BY name ASC LIMIT 500');
-	if (mysql_num_rows($ways) == 0) break;
-	$street_name = '';
-	$street_ways_id = $street_suburbs_id = array();
+	$ways = mysql_query('SELECT way.id, way.name FROM way LEFT JOIN railway ON way.id = railway.way_id WHERE railway.id IS NULL AND way.street_id IS NULL ORDER BY way.name ASC LIMIT 500');
+	$rows = mysql_num_rows($ways);
+	if ($rows == 0) break;
+	$streets_ways = array();
+	$i = 0;
 	while ($way = mysql_fetch_assoc($ways)) {
-		if ($way['suburb_id'] === NULL) {
-			$nodes = mysql_query('SELECT node.suburb_id FROM way_nodes LEFT JOIN node ON way_nodes.node_id = node.id WHERE way_nodes.way_id = ' . $way['id']);
-			$suburbs = array();
-			while (list($suburb_id) = mysql_fetch_row($nodes)) {
-				if (isset($suburbs[$suburb_id])) ++$suburbs[$suburb_id];
-				else $suburbs[$suburb_id] = 1;
-			}
-			$way['suburb_id'] = array_search(max($suburbs), $suburbs);
-			if (empty($way['suburb_id'])) die('Unable to calculate suburb');
-			mysql_query('UPDATE way SET suburb_id = ' . $way['suburb_id'] . ' WHERE id = ' . $way['id']);
-		}
-		if ($street_name == '' || $street_name == $way['name'])
+		if (count($streets_ways) == 0 || $streets_ways[0]['name'] == $way['name'])
 		{
-			$street_name = $way['name'];
-			if (!in_array($way['suburb_id'], $street_suburbs_id)) $street_suburbs_id[] = $way['suburb_id'];
-			$street_ways_id[] = $way['id'];
-		} else {
-			mysql_query('INSERT INTO street (name) VALUES ("' . mysql_real_escape_string($street_name) . '")') or die(mysql_error());
-			$street_id = (int)mysql_insert_id();
-			if ($street_id == 0) die('Error inserting street');
-			mysql_query('UPDATE way SET street_id = ' .  $street_id . ' WHERE id IN (' . implode(',', $street_ways_id) . ')') or die(mysql_error());
-			foreach ($street_suburbs_id as $street_suburb_id) {
-				mysql_query('INSERT INTO street_suburbs (street_id, suburb_id) VALUES (' . $street_id . ', ' . $street_suburb_id . ')') or die(mysql_error());
+			$streets_ways[] = $way;
+		}
+
+		if ((++$i == $rows && $rows < 500) || (count($streets_ways) > 0 && $streets_ways[0]['name'] != $way['name'])) {
+			$ways_nodes = array();
+			foreach ($streets_ways as $street_way) {
+				$nodes = mysql_query('SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id WHERE way_id = ' . $street_way['id']);
+				$ways_nodes[$street_way['id']] = array();
+				while ($node = mysql_fetch_assoc($nodes)) {
+					$ways_nodes[$street_way['id']][] = $node;
+				}
 			}
-			$street_name = '';
-			$street_ways_id = $street_suburbs_id = array();
+			$streets = $streets_nodes = array();
+			while (count($streets_ways) > 0) {
+				$initial_count = count($streets_ways);
+				foreach ($streets_ways as $streets_ways_key => $free_way) {
+					foreach ($ways_nodes[$free_way['id']] as $node) {
+						foreach ($streets_nodes as $k => $street_nodes) {
+							if (in_array($node, $street_nodes) || is_node_near_nodes($node, $street_nodes)) {
+								$streets[$k][] = $free_way;
+								foreach ($ways_nodes[$free_way['id']] as $node)
+									$streets_nodes[$k][] = $node;
+								unset($streets_ways[$streets_ways_key]);
+								break 2;
+							}
+						}
+					}
+				}
+				if ($initial_count == count($streets_ways)) {
+					$streets[] = array(array_shift($streets_ways));
+					$streets_nodes[] = array();
+					foreach ($ways_nodes[$streets[0][0]['id']] as $node)
+						$streets_nodes[0][] = $node;
+				}
+			}
+			foreach ($streets as $street) {
+				mysql_query('INSERT INTO street (name) VALUES ("' . mysql_real_escape_string($street[0]['name']) . '")');
+				$street_id = (int)mysql_insert_id();
+				if ($street_id == 0) die('Error inserting street');
+				$street_ways_id = $street_suburbs_id = array();
+				foreach ($street as $street_way) {
+					$street_ways_id[] = $street_way['id'];
+					if (!in_array($street_way['suburb_id'], $street_suburbs_id)) $street_suburbs_id[] = $street_way['suburb_id'];
+				}
+				mysql_query('UPDATE way SET street_id = ' .  $street_id . ' WHERE id IN (' . implode(',', $street_ways_id) . ')');
+				foreach ($street_suburbs_id as $street_suburb_id) {
+					mysql_query('INSERT INTO street_suburbs (street_id, suburb_id) VALUES (' . $street_id . ', ' . $street_suburb_id . ')');
+				}
+			}
+			$streets_ways = array($way);
 		}
 	}
 }
