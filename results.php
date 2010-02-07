@@ -1,5 +1,4 @@
 <?php
-$_REQUEST = array ( 'from' => 'Av. 9 de Julio', 'from_intersection' => 'Av. San Juan', 'to' => 'Av. 9 de Julio', 'to_intersection' => 'Avenida Corrientes', 'bus' => 'on', 'railway' => 'on', );
 require_once 'boot.php';
 require_once 'utils/db_search.php';
 require_once 'utils/grammar.php';
