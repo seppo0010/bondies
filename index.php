@@ -1,5 +1,5 @@
 <?php
-require 'html_util.php';
+require 'utils/html.php';
 ?>
 <html>
 <head>
@@ -15,6 +15,11 @@ require 'html_util.php';
 	</div>
 	<div id="corner_to">
 		<?php echo html_street_lookup('to', TRUE); ?>
+	</div>
+	<div id="transportation">
+		<input type="checkbox" name="bus" id="bus" /><label for="bus">Bus</label>
+		<input type="checkbox" name="train" id="train" /><label for="train">Train</label>
+		<input type="checkbox" name="railway" id="railway" /><label for="railway">Railway</label>
 	</div>
 	<div>
 		<input type="submit" value="Buscar" />

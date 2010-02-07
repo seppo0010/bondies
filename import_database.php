@@ -2,7 +2,7 @@
 require 'boot.php';
 
 mysql_query('DROP TABLE node');
-mysql_query('DROP TABLE suburb');
+mysql_query('DROP TABLE node_halt');
 //mysql_query('DROP TABLE node_tags');
 mysql_query('CREATE TABLE node ( id BIGINT(20) unsigned not null PRIMARY KEY, lat FLOAT(9,7), lon FLOAT(9,7), suburb_id BIGINT(20) UNSIGNED DEFAULT NULL );' );
 //mysql_query('CREATE TABLE node_tags ( node_id BIGINT(20) not null, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY node_key (node_id, field), INDEX field (field), INDEX node_id (node_id) )');
@@ -11,10 +11,12 @@ mysql_query('CREATE TABLE suburb ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(
 mysql_query('DROP TABLE way');
 mysql_query('DROP TABLE way_nodes');
 mysql_query('DROP TABLE railway');
+mysql_query('DROP TABLE railway_halts');
 //mysql_query('DROP TABLE way_tags');
 mysql_query('CREATE TABLE way ( id BIGINT(20) unsigned not null PRIMARY KEY, name VARCHAR(255), street_id BIGINT(20), INDEX name (name) )');
 mysql_query('CREATE TABLE way_nodes ( way_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL )');
-mysql_query('CREATE TABLE railway ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, UNIQUE KEY way_id (way_id) )');
+mysql_query('CREATE TABLE railway ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, operator VARCHAR(255), UNIQUE KEY way_id (way_id) )');
+mysql_query('CREATE TABLE railway_halts ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255) )');
 //mysql_query('CREATE TABLE way_tags ( way_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY way_key (way_id, field), INDEX field (field), INDEX way_id (way_id)  )');
 
 mysql_query('DROP TABLE train');
@@ -67,7 +69,9 @@ foreach ($simplexml as $node) {
 			if (isset($tags['place']) && $tags['place'] == 'suburb' && isset($tags['name'])) {
 				$suburbs[$node_id] = array($lat, $lon);
 				mysql_query('INSERT INTO suburb (node_id, name, is_in) VALUES (' . $node_id . ',"' . mysql_real_escape_string($tags['name']) . '", "' . mysql_real_escape_string($tags['is_in']) . '")');
-			}  
+			} elseif (isset($tags['railway']) && $tags['railway'] == 'halt' && isset($tags['name'])) {
+				mysql_query('INSERT INTO railway_halts (node_id, name) VALUES (' . $node_id . ', "' . mysql_real_escape_string($tags['name']) . '")');
+			}
 		}
 	} else if ($node->getName() == 'way') {
 		$way_id = NULL;
@@ -77,6 +81,7 @@ foreach ($simplexml as $node) {
 		if ($way_id !== NULL) {
 			$is_highway = FALSE;
 			$railway = NULL;
+			$operator = "";
 			$name = NULL;
 			$nodes = array();
 			foreach ($node->children() as $child) {
@@ -89,20 +94,23 @@ foreach ($simplexml as $node) {
 					$v = NULL;
 					$is_name = FALSE;
 					$is_railway = FALSE;
+					$is_operator = FALSE;
 					foreach ($child->attributes() as $key => $value) 
 					{
+						if ($key == 'k' && $value == 'operator') $is_operator = TRUE;
 						if ($key == 'k' && $value == 'highway') $is_highway = TRUE;
 						if ($key == 'k' && $value == 'name') $is_name = TRUE;
 						if ($key == 'v') $v = $value;
 						if ($key == 'k' && $value == 'railway') $is_railway = TRUE;
 					}
 				}
+				if ($is_operator) $operator = $v;
 				if ($is_railway) $railway = $v;
 				if ($is_name) $name = $v;
 			}
 			if (($is_highway || $railway !== NULL) && $name !== NULL && count($nodes) > 0) {
 				mysql_query('INSERT INTO way (id, name) VALUES (' . $way_id . ', "' . mysql_real_escape_string($name) . '")');
-				if ($railway !== NULL) mysql_query('INSERT INTO railway (way_id) VALUES (' . $way_id . ')');
+				if ($railway !== NULL) mysql_query('INSERT INTO railway (way_id, operator) VALUES (' . $way_id . ', "' . $operator . '")');
 				foreach ($nodes as $node)
 					mysql_query('INSERT INTO way_nodes (way_id, node_id) VALUES (' . $way_id . ', ' . $node . ')');
 			}
