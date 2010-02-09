@@ -2,10 +2,13 @@
 require_once 'boot.php';
 require_once 'utils/db_search.php';
 require_once 'utils/grammar.php';
+
+include 'index.php';
+
 $from_node = get_node_from_street_ids($_REQUEST['from_id'], $_REQUEST['from_intersection_id']);
-if ($from_node == null) die('Unable to find origin intersection');
+if ($from_node == null) die('<span style="color:red">Unable to find origin intersection</span>');
 $to_node = get_node_from_street_ids($_REQUEST['to_id'], $_REQUEST['to_intersection_id']);
-if ($to_node == null) die('Unable to find destination intersection');
+if ($to_node == null) die('<span style="color:red">Unable to find destination intersection</span>');
 
 $results = array(); // each result MUST have: ways, name, from_node, to_node, walk_distance, type (bus,train,railway). MIGHT have: operator
 $from_walk_upto = 0.5; // kilometers
@@ -50,4 +53,9 @@ function walk_distance_sort($a, $b) {
 usort($results, 'walk_distance_sort');
 //$results = array_reverse($results);
 
-var_dump($results);
+if (count($results) == 0) die('Unable to find any route matching both directions');
+echo '<table>';
+foreach ($results as $result) {
+	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td></tr>';
+}
+echo '</table>';

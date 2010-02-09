@@ -38,13 +38,16 @@ Event.observe(window,'load',function() {
 <select name="subzones" id="subzones">
 <option value=""></option>
 </select>
-<form method="post" action="results.php">
+<form method="post" action="results.php" onsubmit="if ($F('from_id').length * $F('from_intersection_id').length * $F('to_id').length * $F('to_intersection_id').length == 0) { alert('a'); return false; } ">
 	<div id="corner_from">
-		<?php echo html_street_lookup('from', TRUE); ?>
-	</div>
+		<?php echo html_street_lookup('origin', 'from', TRUE); ?>
+	</div><br />
 	<div id="corner_to">
-		<?php echo html_street_lookup('to', TRUE); ?>
-	</div>
+		<?php echo html_street_lookup('destination', 'to', TRUE); ?>
+	</div><br />
+	<div>
+		Note: Only available intersections will appear
+	</div><br />
 	<div id="transportation">
 		<input type="checkbox" name="bus" id="bus" /><label for="bus">Bus</label>
 		<input type="checkbox" name="train" id="train" /><label for="train">Train</label>
