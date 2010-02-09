@@ -7,6 +7,11 @@ $zones = list_zones();
 <html>
 <head>
 <title>Bondies</title>
+<style type="text/css">
+ul, li { list-style-type: none; display: block; padding: 4px; margin:0; }
+li.even {background: #999; }
+li.odd {background: #666; }
+</style>
 <script type="text/javascript" src="javascript/prototype/prototype.js"></script>
 <script type="text/javascript" src="javascript/scriptaculous/effects.js"></script>
 <script type="text/javascript" src="javascript/scriptaculous/controls.js"></script>

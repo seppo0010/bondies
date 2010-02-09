@@ -8,6 +8,6 @@ $streets = mysql_query('SELECT street.id, street.full_name FROM street JOIN stre
 ?>
 <ul>
 <?php while ($street = mysql_fetch_assoc($streets)) { ?>
-<li id="street_<?php echo $street['id']; ?>"><?php  echo html_utf8($street['full_name']); ?></li>
+<li class="<?php echo $i++ & 1 == 1 ? 'odd' : 'even'; ?>" id="street_<?php echo $street['id']; ?>"><?php  echo html_utf8($street['full_name']); ?></li>
 <?php } ?>
 </ul>
