@@ -13,7 +13,7 @@ if (count($street_nodes_id) > 0) {
 
 $subzone = '';
 if (!empty($_REQUEST['subzone'])) $subzone = 'suburb.node_id = "' . mysql_real_escape_string($_REQUEST['subzone']) . '" AND ';
-$streets = mysql_query('SELECT street.id, street.full_name FROM street JOIN street_suburbs ON street.id = street_suburbs.street_id JOIN suburb ON street_suburbs.suburb_id = suburb.node_id WHERE ' . $subzone . ' suburb.is_in = "' . mysql_real_escape_string($_REQUEST['zone']) . '" AND street.id != "' . mysql_real_escape_string($_REQUEST['street_id']) . '" AND street.name LIKE "%' . str_replace(array('%', '?'), array('\\%', '\\?'), mysql_real_escape_string($_REQUEST['street'])) . '%" LIMIT 20') or die(mysql_error());
+$streets = mysql_query('SELECT street.id, street.full_name FROM street JOIN street_suburbs ON street.id = street_suburbs.street_id JOIN suburb ON street_suburbs.suburb_id = suburb.node_id WHERE ' . $subzone . ' suburb.is_in = "' . mysql_real_escape_string($_REQUEST['zone']) . '" AND street.id != "' . mysql_real_escape_string($_REQUEST['street_id']) . '" AND street.name LIKE "%' . str_replace(array('%', '?'), array('\\%', '\\?'), mysql_real_escape_string($_REQUEST['street'])) . '%" GROUP BY street.id LIMIT 20') or die(mysql_error());
 if (isset($streets) && mysql_num_rows($streets) > 0) {
 ?>
 <ul>
