@@ -6,17 +6,17 @@ mysql_query('DROP TABLE node_halt');
 //mysql_query('DROP TABLE node_tags');
 mysql_query('CREATE TABLE node ( id BIGINT(20) unsigned not null PRIMARY KEY, lat FLOAT(9,7), lon FLOAT(9,7) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci' );
 //mysql_query('CREATE TABLE node_tags ( node_id BIGINT(20) not null, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY node_key (node_id, field), INDEX field (field), INDEX node_id (node_id) )');
-mysql_query('CREATE TABLE suburb ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255), is_in VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE suburb ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255), is_in VARCHAR(255), INDEX name (name), INDEX is_in (is_in) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 
 mysql_query('DROP TABLE way');
 mysql_query('DROP TABLE way_nodes');
 mysql_query('DROP TABLE railway');
 mysql_query('DROP TABLE railway_halts');
 //mysql_query('DROP TABLE way_tags');
-mysql_query('CREATE TABLE way ( id BIGINT(20) unsigned not null PRIMARY KEY, name VARCHAR(255), street_id BIGINT(20), INDEX name (name) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE way_nodes ( way_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE way ( id BIGINT(20) unsigned not null PRIMARY KEY, name VARCHAR(255), street_id BIGINT(20), INDEX name (name), INDEX street_id (street_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE way_nodes ( way_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL, INDEX way_id (way_id), INDEX node_id (node_id) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 mysql_query('CREATE TABLE railway ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, operator VARCHAR(255), UNIQUE KEY way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE railway_halts ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE railway_halts ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255), INDEX node_id (node_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 //mysql_query('CREATE TABLE way_tags ( way_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY way_key (way_id, field), INDEX field (field), INDEX way_id (way_id)  )');
 
 mysql_query('DROP TABLE train');
@@ -26,16 +26,16 @@ mysql_query('DROP TABLE relation_nodes');
 mysql_query('DROP TABLE relation_ways');
 //mysql_query('DROP TABLE relation_tags');
 mysql_query('CREATE TABLE train ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, operator VARCHAR(255), UNIQUE KEY way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE train_stations ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
-mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
-mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL, ordering INT(1) UNSIGNED ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE train_stations ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255), INDEX node_id (node_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255), INDEX relation_id (relation_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci'); 
+mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL, INDEX relation_id (relation_id), INDEX node_id (node_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL, ordering INT(1) UNSIGNED, INDEX relation_id (relation_id), INDEX way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
 //mysql_query('CREATE TABLE relation_tags ( relation_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY relation_key (relation_id, field, INDEX field (field), INDEX relation_id (relation_id)  )');
 
 mysql_query('DROP TABLE street');
 mysql_query('DROP TABLE street_suburbs');
 mysql_query('CREATE TABLE street ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), full_name VARCHAR(255) )'); // street is an entity we create, so it must be autoincrement unlike ways, nodes and relations
-mysql_query('CREATE TABLE street_suburbs ( street_id BIGINT(20), suburb_id BIGINT(20) )');
+mysql_query('CREATE TABLE street_suburbs ( street_id BIGINT(20), suburb_id BIGINT(20), INDEX street_id (street_id), INDEX suburb_id (suburb_id) )');
 
 //$data = file_get_contents('sample');
 //$simplexml = simplexml_load_string($data);
