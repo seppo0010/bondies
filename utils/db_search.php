@@ -58,3 +58,18 @@ function get_train_ways($railway_id) {
 	// TODO: implement this, if necesary...
 	return array();
 }
+
+function get_buses_near_node($lat, $lon, $max_distance) {
+        return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, relation_ways.ordering FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN relation_ways ON way_nodes.way_id = relation_ways.way_id WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
+}
+
+function get_bus_info($bus_id) {
+        $info = mysql_query('SELECT bus.name, bus.operator FROM bus WHERE bus.relation_id = ' . (int)$bus_id) or die(mysql_error());
+        if (mysql_num_rows($info) == 0) return array('name' => 'unknown', 'operator' => 'unknown');
+        return mysql_fetch_assoc($info);
+}
+
+function get_bus_ways($railway_id) {
+        // TODO: implement this, if necesary...
+        return array();
+}
