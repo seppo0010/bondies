@@ -13,7 +13,6 @@ if ($to_node == null) die('<span style="color:red">Unable to find destination in
 $results = array(); // each result MUST have: ways, name, from_node, to_node, walk_distance, type (bus,train,railway). MIGHT have: operator
 $from_walk_upto = 0.5; // kilometers
 $to_walk_upto = 0.5; // kilometers
-
 $types = array();
 if (isset($_REQUEST['railway'])) $types[] = 'railway';
 if (isset($_REQUEST['bus'    ])) $types[] = 'bus';
@@ -32,13 +31,15 @@ foreach ($types as $type) {
 			$railway_info = $temp($railway_id);
 			$temp = 'get_' . $type . '_ways';
 			$results[] = array(
-				'name' => $railway_info['name'],
-				'operator' => $railway_info['operator'],
-				'ways' => $temp($railway_id),
-				'from_node' => $from_railways[$railway_id]['node'],
-				'to_node'   => $to_railways[$railway_id]['node'],
+				'name'          => $railway_info['name'],
+				'operator'      => $railway_info['operator'],
+				'ways'          => $temp($railway_id),
+				'from_node'     => $from_railways[$railway_id]['node'],
+				'from_ways'     => list_ways_for_node_id($from_railways[$railway_id]['node']['id']),
+				'to_node'       => $to_railways[$railway_id]['node'],
+				'to_ways'       => list_ways_for_node_id($to_railways  [$railway_id]['node']['id']),
 				'walk_distance' => $from_railways[$railway_id]['distance'] + $to_railways[$railway_id]['distance'],
-				'type' => $type
+				'type'          => $type
 			);
 		}
 	}
@@ -54,8 +55,12 @@ usort($results, 'walk_distance_sort');
 //$results = array_reverse($results);
 
 if (count($results) == 0) die('Unable to find any route matching both directions');
-echo '<table>';
+echo '<table border="1" width="100%">';
 foreach ($results as $result) {
-	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td></tr>';
+	$from_ways = array();
+	foreach ($result['from_ways'] as $way) $from_ways[] = $way['name'];
+	$to_ways = array();
+	foreach ($result['to_ways'] as $way) $to_ways[] = $way['name'];
+	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td><td>' . implode(', ', $from_ways) . '</td><td>' . implode(', ', $to_ways) . '</td></tr>';
 }
 echo '</table>';

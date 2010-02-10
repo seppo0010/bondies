@@ -11,6 +11,15 @@ function get_node_from_street_ids($street1, $street2) {
 	return mysql_fetch_assoc($from_node_query);
 }
 
+function list_ways_for_node_id($node_id) {
+	$ways_query = mysql_query('SELECT DISTINCT way.id, way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = ' . $node_id);
+	$ways = array();
+	while ($way = mysql_fetch_assoc($ways_query)) {
+		$ways[] = $way;
+	}
+	return $ways;
+}
+
 function get_thing_near_node($lat, $lon, $max_distance, $q1, $q2) {
 	$square = calculate_box($lat, $lon, $max_distance * 2);
 	$halts = mysql_query(sprintf($q1, $square[0], $square[2], $square[1], $square[3]));
