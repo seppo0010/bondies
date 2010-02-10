@@ -11,10 +11,10 @@ function get_node_from_street_ids($street1, $street2) {
 	return mysql_fetch_assoc($from_node_query);
 }
 
-function list_ways_for_node_id($node_id) {
-	$ways_query = mysql_query('SELECT DISTINCT way.id, way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = ' . $node_id);
+function list_way_names_for_node_id($node_id) {
+	$ways_query = mysql_query('SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = ' . $node_id);
 	$ways = array();
-	while ($way = mysql_fetch_assoc($ways_query)) {
+	while (list($way) = mysql_fetch_row($ways_query)) {
 		$ways[] = $way;
 	}
 	return $ways;
@@ -69,7 +69,7 @@ function get_train_ways($railway_id) {
 }
 
 function get_buses_near_node($lat, $lon, $max_distance) {
-        return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, relation_ways.ordering FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN relation_ways ON way_nodes.way_id = relation_ways.way_id WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
+	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, relation_ways.ordering FROM relation_ways JOIN way_nodes ON way_nodes.way_id = relation_ways.way_id JOIN node ON node.id = way_nodes.node_id  WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
 }
 
 function get_bus_info($bus_id) {

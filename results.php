@@ -35,9 +35,9 @@ foreach ($types as $type) {
 				'operator'      => $railway_info['operator'],
 				'ways'          => $temp($railway_id),
 				'from_node'     => $from_railways[$railway_id]['node'],
-				'from_ways'     => list_ways_for_node_id($from_railways[$railway_id]['node']['id']),
+				'from_ways'     => list_way_names_for_node_id($from_railways[$railway_id]['node']['id']),
 				'to_node'       => $to_railways[$railway_id]['node'],
-				'to_ways'       => list_ways_for_node_id($to_railways  [$railway_id]['node']['id']),
+				'to_ways'       => list_way_names_for_node_id($to_railways  [$railway_id]['node']['id']),
 				'walk_distance' => $from_railways[$railway_id]['distance'] + $to_railways[$railway_id]['distance'],
 				'type'          => $type
 			);
@@ -57,10 +57,6 @@ usort($results, 'walk_distance_sort');
 if (count($results) == 0) die('Unable to find any route matching both directions');
 echo '<table border="1" width="100%">';
 foreach ($results as $result) {
-	$from_ways = array();
-	foreach ($result['from_ways'] as $way) $from_ways[] = $way['name'];
-	$to_ways = array();
-	foreach ($result['to_ways'] as $way) $to_ways[] = $way['name'];
-	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td><td>' . implode(', ', $from_ways) . '</td><td>' . implode(', ', $to_ways) . '</td></tr>';
+	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td><td>' . implode(', ', $result['from_ways']) . '</td><td>' . implode(', ', $result['to_ways']) . '</td></tr>';
 }
 echo '</table>';
