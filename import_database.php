@@ -1,7 +1,7 @@
 <?php
 require_once 'boot.php';
 
-$keep_data = FALSE;
+$keep_data = !FALSE;
 $suburbs = array();
 if ($keep_data === FALSE) {
 	mysql_query('DROP TABLE node');
@@ -277,4 +277,16 @@ while (true) {
 			$streets_ways = array($way);
 		}
 	}
+}
+
+$remaining_ways  = mysql_query('SELECT DISTINCT relation_ways.way_id   FROM relation_ways  LEFT JOIN way  ON relation_ways.way_id   = way.id  WHERE way.id  IS NULL');
+if (mysql_num_rows($remaining_ways) > 0) {
+	echo 'The remaining ways are:' , "\n";
+	while (list($way) = mysql_fetch_row($remaining_ways)) echo $way , "\n";
+}
+
+$remaining_nodes = mysql_query('SELECT DISTINCT relation_nodes.node_id FROM relation_nodes LEFT JOIN node ON relation_nodes.node_id = node.id WHERE node.id IS NULL');
+if (mysql_num_rows($remaining_nodes) > 0) {
+	echo 'The remaining nodes are:' , "\n";
+	while (list($node) = mysql_fetch_row($remaining_nodes)) echo $node , "\n";
 }
