@@ -57,6 +57,6 @@ usort($results, 'walk_distance_sort');
 if (count($results) == 0) die('Unable to find any route matching both directions');
 echo '<table border="1" width="100%">';
 foreach ($results as $result) {
-	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td><td>' . implode(', ', $result['from_ways']) . '</td><td>' . implode(', ', $result['to_ways']) . '</td></tr>';
+	echo '<tr><td>' . html_utf8($result['type']) . '</td><td>'. html_utf8($result['name']) .'</td><td>' . round($result['walk_distance'] * 1000) . ' m</td><td>' . html_utf8(implode(', ', $result['from_ways'])) . '</td><td>' . html_utf8(implode(', ', $result['to_ways'])) . '</td></tr>';
 }
 echo '</table>';
