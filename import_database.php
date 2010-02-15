@@ -1,7 +1,11 @@
 <?php
 require_once 'boot.php';
 
-$keep_data = !FALSE;
+do {
+	echo 'Would you like to keep current data? (Y/n) ';
+	$line = strtolower(trim(fgets(STDIN)));
+} while (!in_array($line,array('y','n','')));
+$keep_data = $line != 'n';
 $suburbs = array();
 if ($keep_data === FALSE) {
 	mysql_query('DROP TABLE node');
@@ -185,10 +189,16 @@ foreach ($simplexml as $node) {
 	}
 }
 
+do {
+	echo 'Would you like to create a street index (only do this, if this is the last XML you are going to import)? (Y/n) ';
+	$line = strtolower(trim(fgets(STDIN)));
+} while (!in_array($line,array('y','n','')));
+echo "\n";
+$create_streets = $line != 'n';
 mysql_query('TRUNCATE street');
 mysql_query('TRUNCATE street_suburbs');
 mysql_query('UPDATE way SET street_id = NULL');
-while (true) {
+while ($create_streets) {
 	$ways = mysql_query('SELECT way.id, way.name FROM way LEFT JOIN railway ON way.id = railway.way_id WHERE railway.id IS NULL AND way.street_id IS NULL ORDER BY way.name ASC LIMIT 500');
 	$rows = mysql_num_rows($ways);
 	if ($rows == 0) break;
@@ -278,7 +288,7 @@ while (true) {
 		}
 	}
 }
-
+/*
 $remaining_ways  = mysql_query('SELECT DISTINCT relation_ways.way_id   FROM relation_ways  LEFT JOIN way  ON relation_ways.way_id   = way.id  WHERE way.id  IS NULL');
 if (mysql_num_rows($remaining_ways) > 0) {
 	echo 'The remaining ways are:' , "\n";
@@ -289,4 +299,4 @@ $remaining_nodes = mysql_query('SELECT DISTINCT relation_nodes.node_id FROM rela
 if (mysql_num_rows($remaining_nodes) > 0) {
 	echo 'The remaining nodes are:' , "\n";
 	while (list($node) = mysql_fetch_row($remaining_nodes)) echo $node , "\n";
-}
+}*/
