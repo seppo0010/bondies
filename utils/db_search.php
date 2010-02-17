@@ -28,9 +28,9 @@ function get_thing_near_node($lat, $lon, $max_distance, $q1, $q2) {
 		$distance = calculate_distance($lat, $lon, $halt['lat'], $halt['lon']);
 		if ($distance > $max_distance) continue;
 		$railway_ids_query = mysql_query(sprintf($q2, $halt['id']));
-		while (list($railway_id) = mysql_fetch_row($railway_ids_query)) {
+		while (list($railway_id, $ordering) = mysql_fetch_row($railway_ids_query)) {
 			if (!isset($railways[$railway_id]) || $distance < $railways[$railway_id]['distance']) {
-				$railways[$railway_id] = array('distance' => $distance, 'node' => $halt);
+				$railways[$railway_id] = array('distance' => $distance, 'node' => $halt, 'ordering' => $ordering);
 			}
 		}
 	}
@@ -69,7 +69,7 @@ function get_train_ways($railway_id) {
 }
 
 function get_buses_near_node($lat, $lon, $max_distance) {
-	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, relation_ways.ordering FROM relation_ways JOIN way_nodes ON way_nodes.way_id = relation_ways.way_id JOIN node ON node.id = way_nodes.node_id  WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
+	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon FROM node WHERE node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT relation_ways.relation_id, relation_ways.ordering  FROM relation_ways JOIN way ON relation_ways.way_id = way.id JOIN way_nodes ON way.id = way_nodes.way_id WHERE way_nodes.node_id = %d');
 }
 
 function get_bus_info($bus_id) {

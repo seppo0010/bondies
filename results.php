@@ -26,7 +26,7 @@ foreach ($types as $type) {
 		$to_railways_id   = array_keys($to_railways  );
 		$common_railways_id = array_intersect($from_railways_id, $to_railways_id);
 		foreach ($common_railways_id as $railway_id) {
-			if (isset($from_railways[$railway_id]['node']['ordering']) && isset($to_railways[$railway_id]['node']['ordering']) && $from_railways[$railway_id]['node']['ordering'] > $to_railways[$railway_id]['node']['ordering']) continue;
+			if (isset($from_railways[$railway_id]['ordering']) && isset($to_railways[$railway_id]['ordering']) && $from_railways[$railway_id]['ordering'] > $to_railways[$railway_id]['ordering']) continue;
 			$temp = 'get_' . $type . '_info';
 			$railway_info = $temp($railway_id);
 			$temp = 'get_' . $type . '_ways';
