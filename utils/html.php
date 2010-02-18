@@ -27,6 +27,8 @@ function html_street_lookup($label, $name, $intersection = FALSE) {
 				}
 			});
 			Event.observe($("' . $name . '_bookmarks"), "change", function() {
+				var key = $F("' . $name . '_bookmarks");
+				if (key < 0) return;
 				var info = window.bookmarks[$F("' . $name . '_bookmarks")];
 				$("' . $name . '").value = info.street_name;
 				$("' . $name . '_id").value = info.street_id;
@@ -39,6 +41,7 @@ function html_street_lookup($label, $name, $intersection = FALSE) {
 				for (var i = 0; i <  window.bookmarks_selects.length; i++) {
 					var select = window.bookmarks_selects[i];
 					$(select).update("");
+					$(select).insert(new Element("option", { "value": "-1" }));
 					for (var j = 0; j < window.bookmarks.length; j++)
 						$(select).insert(new Element("option", { value: j } ).update(window.bookmarks[j].name));
 				}
