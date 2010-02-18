@@ -53,9 +53,9 @@ Event.observe(window,'load',function() {
 		Note: Only available intersections will appear
 	</div><br />
 	<div id="transportation">
-		<input type="checkbox" name="bus" id="bus" /><label for="bus">Bus</label>
-		<input type="checkbox" name="train" id="train" /><label for="train">Train</label>
-		<input type="checkbox" name="railway" id="railway" /><label for="railway">Subway</label>
+		<input type="checkbox" name="bus" id="bus" <?php if (isset($_POST['bus'])) echo 'checked="checked" '; ?>/><label for="bus">Bus</label>
+		<input type="checkbox" name="train" id="train" <?php if (isset($_POST['train'])) echo 'checked="checked" '; ?>/><label for="train">Train</label>
+		<input type="checkbox" name="railway" id="railway" <?php if (isset($_POST['railway'])) echo 'checked="checked" '; ?>/><label for="railway">Subway</label>
 	</div>
 	<div>
 		<input type="submit" value="Buscar" />
