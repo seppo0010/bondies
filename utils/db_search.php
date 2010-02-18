@@ -39,7 +39,7 @@ function get_thing_near_node($lat, $lon, $max_distance, $q1, $q2) {
 
 
 function get_railways_near_node($lat, $lon, $max_distance) {
-	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, railway_halts.name FROM railway_halts JOIN node ON railway_halts.node_id = node.id AND node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT way_id FROM way_nodes WHERE node_id = %d');
+	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, railway_halts.name FROM railway_halts JOIN node ON railway_halts.node_id = node.id AND node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT way_id, NULL FROM way_nodes WHERE node_id = %d');
 }
 
 function get_railway_info($railway_id) {
@@ -54,7 +54,7 @@ function get_railway_ways($railway_id) {
 }
 
 function get_trains_near_node($lat, $lon, $max_distance) {
-	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, train_stations.name FROM train_stations JOIN node ON train_stations.node_id = node.id AND node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT way_id FROM way_nodes WHERE node_id = %d');
+	return get_thing_near_node($lat, $lon, $max_distance, 'SELECT node.id, node.lat, node.lon, train_stations.name FROM train_stations JOIN node ON train_stations.node_id = node.id AND node.lat > %f AND node.lat < %f AND node.lon > %f AND node.lon < %f', 'SELECT way_id, NULL FROM way_nodes WHERE node_id = %d');
 }
 
 function get_train_info($railway_id) {

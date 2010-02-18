@@ -15,7 +15,11 @@ li.odd {background: #666; }
 <script type="text/javascript" src="javascript/prototype/prototype.js"></script>
 <script type="text/javascript" src="javascript/scriptaculous/effects.js"></script>
 <script type="text/javascript" src="javascript/scriptaculous/controls.js"></script>
+<script type="text/javascript" src="javascript/cookies.js"></script>
 <script type="text/javascript">
+var _bookmarks = readCookie('bookmarks');
+window.bookmarks = _bookmarks ? _bookmarks.evalJSON() : [];
+
 var zones = <?php echo htmlentities(json_encode($zones), ENT_NOQUOTES, 'UTF-8'); ?>;
 function subzone() {
 	var value = $F('zones');
