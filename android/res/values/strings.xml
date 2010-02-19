@@ -6,4 +6,5 @@
 <string name="defaultUrl">http://hq.delapalo.net/~sebastianw/bondies/</string>
 <string name="defaultUrlLabel">Base URL:</string>
 <string name="checkVersion">Check Version</string>
+<string name="download">Download!</string>
 </resources>

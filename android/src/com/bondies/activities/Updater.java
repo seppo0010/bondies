@@ -1,5 +1,7 @@
 package com.bondies.activities;
 
+import java.lang.reflect.InvocationTargetException;
+
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -14,13 +16,14 @@ import com.bondies.utils.HttpRequest;
 public class Updater extends Activity {
 	EditText url;
 	Button checkVersion;
-	SharedPreferences settings = this.getApplicationContext().getSharedPreferences("com.bondies", 0);
+	SharedPreferences settings;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.updater);
         url = (EditText) findViewById(R.id.url);
+        settings = this.getSharedPreferences("com.bondies", 0);
     	synchronized(settings) {
     		String userUrl = settings.getString("defaultURL", "");
         	if (userUrl.length() > 0) url.setText(userUrl);
@@ -52,14 +55,17 @@ public class Updater extends Activity {
     	HttpRequest request = new HttpRequest();
     	try {
 			request.onFinishCall(this, this.getClass().getMethod("checkVersionResponse", HttpRequest.class), this.getClass().getMethod("requestFailed", HttpRequest.class));
-			request.requestUrl(url.getText().toString());
+			request.requestUrl(url.getText().toString() + "sqlite_version.php");
 		} catch (Exception e) {
 		}
     }
 
     public void checkVersionResponse(HttpRequest response) {
     	String response_str = response.getResponse();
-    	Integer response_int = Integer.parseInt(response_str);
+    	Integer response_int = 0;
+    	try {
+    		response_int = Integer.parseInt(response_str);
+    	} catch (Exception e) {}
     	int latestVersion = settings.getInt("latestVersion", 0);
     	if (response_int > latestVersion) {
         	Toast.makeText(getApplicationContext(), "There is a new version available", Toast.LENGTH_SHORT).show();
