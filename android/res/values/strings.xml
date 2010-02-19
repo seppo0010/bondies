@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, Home!</string>
+    <string name="app_name">Bondies</string>
+<string name="updater">Updater</string>
+<string name="defaultUrl">http://hq.delapalo.net/~sebastianw/bondies/</string>
+<string name="defaultUrlLabel">Base URL:</string>
+<string name="checkVersion">Check Version</string>
+</resources>
