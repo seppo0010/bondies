@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -13,14 +12,13 @@ import org.apache.http.client.methods.HttpPost;
 
 import android.net.Uri;
 import android.os.Handler;
-import android.util.Log;
 
 public class HttpRequestDownloader extends HttpRequest {
 	File file = null;
 	File downloadFolder = null;
 	private static int BUFFER_SIZE = 1024;
 	long length = 0;
-	private boolean allowResume = true;
+	private boolean allowResume = false;
 
 	protected Object updateCallback;
 	protected Method updateMethod;
@@ -47,10 +45,6 @@ public class HttpRequestDownloader extends HttpRequest {
 
 	private void callUpdate() {
 		try {
-			String a = updateMethod.getName();
-			String v = updateCallback.getClass().getName();
-			String c = this.getClass().getName();
-			Log.d("sa", a+v+c);
 			updateMethod.invoke(updateCallback, new Object[] { this });
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -94,15 +88,15 @@ public class HttpRequestDownloader extends HttpRequest {
 				}
 				length = resEntity.getContentLength();
 				httpStatus = _response.getStatusLine().getStatusCode();
-				if (httpStatus != 206) file.delete();
+//				if (httpStatus != 206) file.delete();
 				FileOutputStream output = new FileOutputStream(file);
 				InputStream input = resEntity.getContent();
 				int offset = 0;
+				byte[] b = new byte[BUFFER_SIZE];
 				while (true) {
-					byte[] b = new byte[BUFFER_SIZE];
 					int read_size = input.read(b, 0, BUFFER_SIZE);
 					if (read_size == -1) break;
-					output.write(b);
+					output.write(b, 0, read_size);
 					offset += BUFFER_SIZE;
 					updateRequestHandler.post(updateRequestRunnable);
 				}

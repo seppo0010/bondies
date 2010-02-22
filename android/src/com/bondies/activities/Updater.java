@@ -1,15 +1,18 @@
 package com.bondies.activities;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bondies.R;
+import com.bondies.utils.GzipDecompressor;
 import com.bondies.utils.HttpRequest;
 import com.bondies.utils.HttpRequestDownloader;
 import com.bondies.utils.HttpRequestSimple;
@@ -20,6 +23,7 @@ public class Updater extends Activity {
 	private SharedPreferences settings;
 	private Button download;
 	private HttpRequestDownloader downloader = null;
+	private ProgressBar progressBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,38 +52,9 @@ public class Updater extends Activity {
 				startDownloading();
 			}
 		});
-    }
 
-    protected void startDownloading() {
-    	if (downloader != null) return;
-    	setBaseUrl();
-    	downloader = new HttpRequestDownloader();
-    	try {
-    		downloader.setOnFinishCall(this, this.getClass().getMethod("downloadFinished", HttpRequestDownloader.class), this.getClass().getMethod("downloadFailed", HttpRequestDownloader.class));
-    		downloader.setOnUpdateCall(this, this.getClass().getMethod("downloadUpdated", HttpRequestDownloader.class));
-    		downloader.requestUrl(url.getText().toString() + "sqlite.db");
-		} catch (Exception e) {
-			e.printStackTrace();
-			downloader = null;
-		}
-	}
- 
-    public void downloadUpdated(HttpRequestDownloader _downloader) {
-    	long a = _downloader.getReadLength();
-    	float percent = _downloader.getReadLength() / _downloader.getTotalLength();
-    	Log.d("percent", String.valueOf(percent) 
-    		+ String.valueOf(a));
-    	Toast.makeText(getApplicationContext(), "Downloaded: " + String.valueOf(_downloader.getReadLength() / _downloader.getTotalLength() * 100) + "%", Toast.LENGTH_SHORT).show();
-    }
-
-    public void downloadFinished(HttpRequestDownloader _downloader) {
-    	Toast.makeText(getApplicationContext(), "Finished", Toast.LENGTH_SHORT).show();
-    	downloader = null;
-    }
-
-    public void downloadFailed(HttpRequestDownloader _downloader) {
-    	Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
-    	downloader = null;
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
 	private void setBaseUrl() {
@@ -88,6 +63,59 @@ public class Updater extends Activity {
     		editor.putString("defaultURL", url.getText().toString());
     		editor.commit();
     	}
+    }
+
+    protected void startDownloading() {
+    	if (downloader != null) return;
+    	Toast.makeText(getApplicationContext(), "Starting Download", Toast.LENGTH_SHORT).show();
+    	setBaseUrl();
+        progressBar.setVisibility(View.VISIBLE);
+		progressBar.setIndeterminate(true);
+    	downloader = new HttpRequestDownloader();
+    	try {
+    		downloader.setOnFinishCall(this, this.getClass().getMethod("downloadFinished", HttpRequestDownloader.class), this.getClass().getMethod("downloadFailed", HttpRequestDownloader.class));
+    		downloader.setOnUpdateCall(this, this.getClass().getMethod("downloadUpdated", HttpRequestDownloader.class));
+    		downloader.requestUrl(url.getText().toString() + "sqlite.db.gz");
+		} catch (Exception e) {
+			e.printStackTrace();
+			downloader = null;
+		}
+	}
+ 
+    public void downloadUpdated(HttpRequestDownloader _downloader) {
+		progressBar.setIndeterminate(false);
+    	progressBar.setMax((int) _downloader.getTotalLength());
+    	progressBar.setProgress((int)_downloader.getReadLength());
+    }
+
+    public void downloadFailed(HttpRequestDownloader _downloader) {
+    	Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
+    	downloader = null;
+    }
+
+    public void downloadFinished(HttpRequestDownloader _downloader) {
+    	Toast.makeText(getApplicationContext(), "Finished Downloading", Toast.LENGTH_SHORT).show();
+    	progressBar.setIndeterminate(true);
+    	File downloadedFile = downloader.getFile();
+    	File uncompressedFile = new File("/sdcard/sqlite.db");
+    	GzipDecompressor decompressor = new GzipDecompressor();
+    	decompressor.setSource(downloadedFile);
+    	decompressor.setTarget(uncompressedFile);
+    	try { decompressor.setOnUpdateCall(this, this.getClass().getMethod("gzipUpdated", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
+    	try { decompressor.setOnFinishCall(this, this.getClass().getMethod("gzipFinished", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
+    	decompressor.startDecompressing();
+    	downloader = null;
+    }
+
+    public void gzipUpdated(GzipDecompressor decompressor) {
+    	progressBar.setIndeterminate(false);
+    	progressBar.setMax(decompressor.getTotalSize());
+    	progressBar.setProgress(decompressor.getReadedSize());
+    }
+
+    public void gzipFinished(GzipDecompressor decompressor) {
+        progressBar.setVisibility(View.INVISIBLE);
+    	Toast.makeText(getApplicationContext(), "Finished Decompressing", Toast.LENGTH_SHORT).show();
     }
 
     private void checkVersion() {
