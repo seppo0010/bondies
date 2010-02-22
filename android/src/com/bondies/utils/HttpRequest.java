@@ -1,50 +1,48 @@
 package com.bondies.utils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 
 import android.os.Handler;
 
-public class HttpRequest {
-	private String url = "";
-	private HashMap<String, String> headers = new HashMap<String, String>();
-	private HashMap<String, String> postParameters = new HashMap<String, String>();
-	private HashMap<String, String> postFiles = new HashMap<String, String>();
-	private Object callback;
-	private Method successMethod;
-	private Method failureMethod;
-	int httpStatus = 0;
-	private String response;
-	private Handler finishedRequestHandler = new Handler();
-	private Runnable finishedRequestRunnable = new Runnable() {
+abstract public class HttpRequest {
+	protected String url = "";
+	protected HashMap<String, String> headers = new HashMap<String, String>();
+	protected HashMap<String, String> postParameters = new HashMap<String, String>();
+	protected HashMap<String, String> postFiles = new HashMap<String, String>();
+	protected HashMap<String, String> getParameters = new HashMap<String, String>();
+	protected Object callback;
+	protected Method successMethod;
+	protected Method failureMethod;
+	protected int httpStatus = 0;
+	protected Handler finishedRequestHandler = new Handler();
+	protected Runnable finishedRequestRunnable = new Runnable() {
 		public void run() {
 			if (httpStatus >= 200 && httpStatus < 400) callSuccess();
 			else callFailure();
 		}
 	};
 
-	public String getResponse() {
-		return response;
-	}
-
-	public void onFinishCall(Object _callback, Method success, Method failure) {
+	public void setOnFinishCall(Object _callback, Method success, Method failure) {
 		callback = _callback;
 		successMethod = success;
 		failureMethod = failure;
 	}
 
-	public void onFinishCall(Object _callback, Method method) {
+	public void setOnFinishCall(Object _callback, Method method) {
 		callback = _callback;
 		successMethod = method;
 		failureMethod = method;
@@ -52,7 +50,10 @@ public class HttpRequest {
 
 	public void requestUrl(String _url) {
 		url = _url;
-		(new HttpRequestThread()).start();
+		startRequest();
+	}
+
+	protected void startRequest() {
 	}
 
 	public void addPostParameter(String key, String value) {
@@ -60,6 +61,13 @@ public class HttpRequest {
 	}
 	public void addPostParameters(HashMap<String,String> headers) {
 		postParameters.putAll(headers);
+	}
+
+	public void addGetParameter(String key, String value) {
+		getParameters.put(key, value);
+	}
+	public void addGetParameters(HashMap<String,String> headers) {
+		getParameters.putAll(headers);
 	}
 
 	public void addPostFile(String key, String path) {
@@ -76,7 +84,7 @@ public class HttpRequest {
 		headers.putAll(headers);
 	}
 
-	private void finished() {
+	protected void finished() {
 		finishedRequestHandler.post(finishedRequestRunnable);
 	}
 
@@ -100,11 +108,43 @@ public class HttpRequest {
 		return httpStatus;
 	}
 
-	private class HttpRequestThread extends Thread {
-		public void run() {
+	protected class HttpRequestThread extends Thread {
+		protected HttpClient getClient() {
 			DefaultHttpClient client = new DefaultHttpClient();
-			MultipartEntity entity = new MultipartEntity();
+			return client;
+		}
+
+		protected HttpRequestBase getRequest() {
+			if (postFiles.size() + postFiles.size() > 0)
+				return getPost();
+			else
+				return getGet();
+		}
+
+		protected HttpGet getGet() {
+			HttpGet get = new HttpGet(url);
+
+			try {
+				HttpParams params = new BasicHttpParams();
+				for (Map.Entry<String, String> entry : getParameters.entrySet()) {
+					params.setParameter(entry.getKey(), entry.getValue());
+				}
+				get.setParams(params);
+			} catch (Exception e) {
+				finished();
+				return null;
+			}
+
+			for (Map.Entry<String, String> entry : headers.entrySet())
+			{
+				get.addHeader(entry.getKey(), entry.getValue());
+			}
+			return get;
+		}
+
+		protected HttpPost getPost() {
 			HttpPost post = new HttpPost(url);
+			MultipartEntity entity = new MultipartEntity();
 
 			for (Map.Entry<String, String> entry : postFiles.entrySet()) {
 				entity.addPart(entry.getKey(), new FileBody(new File(entry.getValue())));
@@ -115,31 +155,15 @@ public class HttpRequest {
 				}
 			} catch (Exception e) {
 				finished();
-				return;
+				return null;
 			}
+
 			for (Map.Entry<String, String> entry : headers.entrySet())
 			{
 				post.addHeader(entry.getKey(), entry.getValue());
 			}
 			post.setEntity(entity);
-
-			try {
-				HttpResponse _response = client.execute(post);
-				HttpEntity resEntity = _response.getEntity();
-				if (resEntity == null) {
-					finished();
-					return;
-				}
-				httpStatus = _response.getStatusLine().getStatusCode();
-				ByteArrayOutputStream output = new ByteArrayOutputStream();
-				resEntity.writeTo(output);
-				byte[] bytes = output.toByteArray();
-				response = new String(bytes);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			finished();
+			return post;
 		}
-
 	}
 }

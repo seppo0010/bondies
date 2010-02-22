@@ -1,10 +1,9 @@
 package com.bondies.activities;
 
-import java.lang.reflect.InvocationTargetException;
-
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,11 +11,15 @@ import android.widget.Toast;
 
 import com.bondies.R;
 import com.bondies.utils.HttpRequest;
+import com.bondies.utils.HttpRequestDownloader;
+import com.bondies.utils.HttpRequestSimple;
 
 public class Updater extends Activity {
-	EditText url;
-	Button checkVersion;
-	SharedPreferences settings;
+	private EditText url;
+	private Button checkVersion;
+	private SharedPreferences settings;
+	private Button download;
+	private HttpRequestDownloader downloader = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,9 +42,47 @@ public class Updater extends Activity {
 				checkVersion();
 			}
 		});
+        download = (Button) findViewById(R.id.download);
+        download.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View arg0) {
+				startDownloading();
+			}
+		});
     }
 
-    private void setBaseUrl() {
+    protected void startDownloading() {
+    	if (downloader != null) return;
+    	setBaseUrl();
+    	downloader = new HttpRequestDownloader();
+    	try {
+    		downloader.setOnFinishCall(this, this.getClass().getMethod("downloadFinished", HttpRequestDownloader.class), this.getClass().getMethod("downloadFailed", HttpRequestDownloader.class));
+    		downloader.setOnUpdateCall(this, this.getClass().getMethod("downloadUpdated", HttpRequestDownloader.class));
+    		downloader.requestUrl(url.getText().toString() + "sqlite.db");
+		} catch (Exception e) {
+			e.printStackTrace();
+			downloader = null;
+		}
+	}
+ 
+    public void downloadUpdated(HttpRequestDownloader _downloader) {
+    	long a = _downloader.getReadLength();
+    	float percent = _downloader.getReadLength() / _downloader.getTotalLength();
+    	Log.d("percent", String.valueOf(percent) 
+    		+ String.valueOf(a));
+    	Toast.makeText(getApplicationContext(), "Downloaded: " + String.valueOf(_downloader.getReadLength() / _downloader.getTotalLength() * 100) + "%", Toast.LENGTH_SHORT).show();
+    }
+
+    public void downloadFinished(HttpRequestDownloader _downloader) {
+    	Toast.makeText(getApplicationContext(), "Finished", Toast.LENGTH_SHORT).show();
+    	downloader = null;
+    }
+
+    public void downloadFailed(HttpRequestDownloader _downloader) {
+    	Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
+    	downloader = null;
+    }
+
+	private void setBaseUrl() {
     	synchronized(settings) {
     		SharedPreferences.Editor editor = settings.edit();
     		editor.putString("defaultURL", url.getText().toString());
@@ -51,16 +92,17 @@ public class Updater extends Activity {
 
     private void checkVersion() {
     	Toast.makeText(getApplicationContext(), "Checking version...", Toast.LENGTH_SHORT).show();
+    	setBaseUrl();
 
-    	HttpRequest request = new HttpRequest();
+    	HttpRequest request = new HttpRequestSimple();
     	try {
-			request.onFinishCall(this, this.getClass().getMethod("checkVersionResponse", HttpRequest.class), this.getClass().getMethod("requestFailed", HttpRequest.class));
+			request.setOnFinishCall(this, this.getClass().getMethod("checkVersionResponse", HttpRequestSimple.class), this.getClass().getMethod("requestFailed", HttpRequestSimple.class));
 			request.requestUrl(url.getText().toString() + "sqlite_version.php");
 		} catch (Exception e) {
 		}
     }
 
-    public void checkVersionResponse(HttpRequest response) {
+    public void checkVersionResponse(HttpRequestSimple response) {
     	String response_str = response.getResponse();
     	Integer response_int = 0;
     	try {
@@ -79,7 +121,7 @@ public class Updater extends Activity {
     	}
     }
 
-    public void requestFailed(HttpRequest response) {
+    public void requestFailed(HttpRequestSimple response) {
     	Toast.makeText(getApplicationContext(), "Failed with code " + String.valueOf(response.getHttpStatus()), Toast.LENGTH_SHORT).show();
     }
 }
