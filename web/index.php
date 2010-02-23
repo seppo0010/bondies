@@ -26,7 +26,7 @@ function subzone() {
 	var subzones = zones[value];
 	var select = $('subzones');
 	select.update('');
-	select.insert(new Element('option', { 'value': '' }).update('All'));
+	select.insert(new Element('option', { 'value': '' }).update('<?php echo html_utf8(i18n('All')); ?>'));
 	$A(subzones).each(function(i) { select.insert(new Element('option', { "value": i.node_id }).update(i.name)); });
 }
 Event.observe(window,'load',function() {
@@ -42,7 +42,7 @@ Event.observe(window,'load',function() {
 <select name="subzones" id="subzones">
 <option value=""></option>
 </select>
-<form method="post" action="results.php" onsubmit="if ($F('from_id').length * $F('from_intersection_id').length * $F('to_id').length * $F('to_intersection_id').length == 0) { alert('a'); return false; } ">
+<form method="post" action="results.php" onsubmit="if ($F('from_id').length * $F('from_intersection_id').length * $F('to_id').length * $F('to_intersection_id').length == 0) { alert(<?php echo html_utf8(i18n('Please insert both streets and intersections')); ?>); return false; } ">
 	<div id="corner_from">
 		<?php echo html_street_lookup('origin', 'from', TRUE); ?>
 	</div><br />
@@ -53,9 +53,9 @@ Event.observe(window,'load',function() {
 		Note: Only available intersections will appear
 	</div><br />
 	<div id="transportation">
-		<input type="checkbox" name="bus" id="bus" <?php if (isset($_POST['bus'])) echo 'checked="checked" '; ?>/><label for="bus">Bus</label>
-		<input type="checkbox" name="train" id="train" <?php if (isset($_POST['train'])) echo 'checked="checked" '; ?>/><label for="train">Train</label>
-		<input type="checkbox" name="railway" id="railway" <?php if (isset($_POST['railway'])) echo 'checked="checked" '; ?>/><label for="railway">Subway</label>
+		<input type="checkbox" name="bus" id="bus" <?php if (isset($_POST['bus'])) echo 'checked="checked" '; ?>/><label for="bus"><?php echo html_utf8(i18n('Bus')); ?></label>
+		<input type="checkbox" name="train" id="train" <?php if (isset($_POST['train'])) echo 'checked="checked" '; ?>/><label for="train"><?php echo html_utf8(i18n('Train')); ?></label>
+		<input type="checkbox" name="railway" id="railway" <?php if (isset($_POST['railway'])) echo 'checked="checked" '; ?>/><label for="railway"><?php echo html_utf8(i18n('Subway')); ?></label>
 	</div>
 	<div>
 		<input type="submit" value="Buscar" />

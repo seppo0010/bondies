@@ -7,3 +7,13 @@ mysql_select_db($db['database']) or die(mysql_error());
 
 mysql_query("SET NAMES 'utf8' COLLATE 'utf8_general_ci'");
 
+function i18n($str) {
+	static $lang = NULL;
+	$current_lang = 'es_AR';
+	if ($lang === NULL)
+		require dirname(__FILE__) . '/config/i18n.php';
+	if (isset($lang[$current_lang]) && isset($lang[$current_lang][$str]))
+		return $lang[$current_lang][$str];
+	else
+		return $str;
+}
