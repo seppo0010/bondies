@@ -1,0 +1,1 @@
+SELECT id, lat, lon FROM node ORDER BY (-34.6265077 - lat) * (-34.6265077 - lat) + (-58.377047 - lon) * (-58.377047 - lon) ASC LIMIT 1;
