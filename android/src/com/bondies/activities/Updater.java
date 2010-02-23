@@ -18,11 +18,13 @@ import com.bondies.utils.HttpRequestDownloader;
 import com.bondies.utils.HttpRequestSimple;
 
 public class Updater extends Activity {
+	private HttpRequestDownloader downloader = null;
+	private GzipDecompressor decompressor = null;
+
 	private EditText url;
 	private Button checkVersion;
 	private SharedPreferences settings;
 	private Button download;
-	private HttpRequestDownloader downloader = null;
 	private ProgressBar progressBar;
 
     @Override
@@ -57,7 +59,42 @@ public class Updater extends Activity {
         progressBar.setVisibility(View.INVISIBLE);
     }
 
-	private void setBaseUrl() {
+    public void onPause() {
+    	super.onPause();
+    	if (downloader != null) {
+    		downloader.setOnFinishCall(null, null);
+    		downloader.setOnUpdateCall(null, null);
+    	}
+    	if (decompressor != null) {
+    		decompressor.setOnUpdateCall(null, null);
+    		decompressor.setOnFinishCall(null, null);
+    	}
+    }
+
+    public void onResume() {
+    	super.onResume();
+		this.setDownloaderCalls();
+		this.setGzipperCalls();
+    }
+
+    private void setDownloaderCalls() {
+    	if (downloader == null) return;
+    	try {
+			downloader.setOnFinishCall(this, this.getClass().getMethod("downloadFinished", HttpRequestDownloader.class), this.getClass().getMethod("downloadFailed", HttpRequestDownloader.class));
+			downloader.setOnUpdateCall(this, this.getClass().getMethod("downloadUpdated", HttpRequestDownloader.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+			downloader = null;
+		}
+    }
+
+    private void setGzipperCalls() {
+    	if (decompressor == null) return;
+    	try { decompressor.setOnUpdateCall(this, this.getClass().getMethod("gzipUpdated", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
+    	try { decompressor.setOnFinishCall(this, this.getClass().getMethod("gzipFinished", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void setBaseUrl() {
     	synchronized(settings) {
     		SharedPreferences.Editor editor = settings.edit();
     		editor.putString("defaultURL", url.getText().toString());
@@ -72,9 +109,9 @@ public class Updater extends Activity {
         progressBar.setVisibility(View.VISIBLE);
 		progressBar.setIndeterminate(true);
     	downloader = new HttpRequestDownloader();
+    	downloader.setDownloadFolder("/sdcard/bondies/");
     	try {
-    		downloader.setOnFinishCall(this, this.getClass().getMethod("downloadFinished", HttpRequestDownloader.class), this.getClass().getMethod("downloadFailed", HttpRequestDownloader.class));
-    		downloader.setOnUpdateCall(this, this.getClass().getMethod("downloadUpdated", HttpRequestDownloader.class));
+    		this.setDownloaderCalls();
     		downloader.requestUrl(url.getText().toString() + "sqlite.db.gz");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -97,12 +134,11 @@ public class Updater extends Activity {
     	Toast.makeText(getApplicationContext(), "Finished Downloading", Toast.LENGTH_SHORT).show();
     	progressBar.setIndeterminate(true);
     	File downloadedFile = downloader.getFile();
-    	File uncompressedFile = new File("/sdcard/sqlite.db");
-    	GzipDecompressor decompressor = new GzipDecompressor();
+    	File uncompressedFile = new File("/sdcard/bondies/sqlite.db");
+    	decompressor = new GzipDecompressor();
     	decompressor.setSource(downloadedFile);
     	decompressor.setTarget(uncompressedFile);
-    	try { decompressor.setOnUpdateCall(this, this.getClass().getMethod("gzipUpdated", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
-    	try { decompressor.setOnFinishCall(this, this.getClass().getMethod("gzipFinished", GzipDecompressor.class)); } catch (Exception e) { e.printStackTrace(); }
+    	this.setGzipperCalls();
     	decompressor.startDecompressing();
     	downloader = null;
     }

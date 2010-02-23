@@ -44,6 +44,7 @@ public class HttpRequestDownloader extends HttpRequest {
 	}
 
 	private void callUpdate() {
+		if (updateMethod == null || updateCallback == null) return;
 		try {
 			updateMethod.invoke(updateCallback, new Object[] { this });
 		} catch (Exception e) {

@@ -12,6 +12,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.bondies.activities.Updater"
+        		android:launchMode="singleTask"
                   android:label="@string/updater">
         </activity>
 

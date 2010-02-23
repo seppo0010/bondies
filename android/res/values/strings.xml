@@ -7,4 +7,5 @@
 <string name="defaultUrlLabel">Base URL:</string>
 <string name="checkVersion">Check Version</string>
 <string name="download">Download!</string>
+<string name="openDownloader">Open Downloader</string>
 </resources>

@@ -46,6 +46,7 @@ public class GzipDecompressor {
 	}
 	
 	private void callUpdate() {
+		if (updateMethod == null || updateObject == null) return;
 		try {
 			updateMethod.invoke(updateObject, new Object[] { this });
 		} catch (Exception e) {
@@ -54,6 +55,7 @@ public class GzipDecompressor {
 	}
 
 	private void callFinish() {
+		if (finishMethod == null || finishObject == null) return;
 		try {
 			finishMethod.invoke(finishObject, new Object[] { this });
 		} catch (Exception e) {

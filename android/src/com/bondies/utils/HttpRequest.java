@@ -89,6 +89,7 @@ abstract public class HttpRequest {
 	}
 
 	protected void callSuccess() {
+		if (successMethod == null || callback == null) return;
 		try {
 			successMethod.invoke(callback, new Object[] {this});
 		} catch (Exception e) {
@@ -97,6 +98,7 @@ abstract public class HttpRequest {
 	}
 
 	protected void callFailure() {
+		if (failureMethod == null || callback == null) return;
 		try {
 			failureMethod.invoke(callback, new Object[] {this});
 		} catch (Exception e) {
