@@ -1,0 +1,16 @@
+1. No está la calle XXX o el colectivo YYY
+Los datos son extraídos periódicamente de openstreetmap.org. Cualquier modificación que se haga ahí será incluida, con el tiempo, en esta base de datos.
+
+2. El colectivo YYY une estás direcciones, pero no aparece!
+Hay dos posibilidades. Primero, es posible que el colectivo no esté cargado en la base de datos (lea el FAQ 1) o esté cargado de forma incompleta. Por otro lado, es posible que haya un error en el sistema que haga no aparecer el colectivo correspondiente. En este caso, se debería reportar un "issue" sobre el tema ( http://code.google.com/p/bondies/issues/list ).
+
+3. La calle XXX aparece dos veces
+Como siempre, hay varias posibilidades. Puede ser que la calle no esté escrita exactamente igual (por ejemplo: "Av. Corrientes" y "Avenida Corrientes") por lo que el sistema no lo reconoce como la misma calle (ver FAQ 1), o puede también ser un error de sistema. Si parecen ser iguales, debería reportar un "issue" sobre el tema ( http://code.google.com/p/bondies/issues/list ).
+
+4. El barrio/partido/provincia de una calle es equivocado
+Las zonas se calculan de forma aproximada, así que la precisión no está garantizada. No hay mucho que se pueda hacer. Si hay una zona entera mal etiquetada, debería modificarse la zona desde OpenStreetMap.
+
+5. Hay un error y no funciona!
+Por favor, reporte el error en http://code.google.com/p/bondies/issues/list con el mayor grado de detalles y precisión posible.
+En el caso web, por favor, indicar el sistema operativo, explorador y versiones de los mismos.
+En el caso Android, indicar la versión y el aparato.
