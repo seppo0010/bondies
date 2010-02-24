@@ -8,6 +8,7 @@ import android.widget.Button;
 
 public class Home extends Activity {
 	private Button updater;
+	private Button search;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -19,11 +20,22 @@ public class Home extends Activity {
 				openUpdater();
 			}
 		});
+        search = (Button)findViewById(R.id.search);
+        search.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				openSearch();
+			}
+		});
     }
 
     private void openUpdater() {
         Intent intent = new Intent();
         intent.setClass(getApplicationContext(), com.bondies.activities.Updater.class);
+        this.startActivity(intent);
+    }
+    private void openSearch() {
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), com.bondies.activities.Search.class);
         this.startActivity(intent);
     }
 }
