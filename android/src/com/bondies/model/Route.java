@@ -2,6 +2,10 @@ package com.bondies.model;
 
 import java.util.ArrayList;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+
 public class Route {
 	final public static int BUS = 1; 
 	final public static int TRAIN = 2; 
@@ -64,8 +68,8 @@ public class Route {
 	static ArrayList<Route> search(int from_id, int from_intersection_id, int to_id, int to_intersection_id, int media) throws NodeNotFoundException {
 		//["from_id"]=> string(4) "1280"  ["from_intersection_id"]=> string(4) "1587" ["to_id"]=> string(4) "1280" ["to_intersection_id"]=> string(4) "1583"
 		if (media == 0) return null;
-		int from_node = getNodeFromStreetIds(from_id, from_intersection_id);
-		int to_node = getNodeFromStreetIds(to_id, to_intersection_id);
+		Node from_node = Node.getByStreets(from_id, from_intersection_id);
+		Node to_node = Node.getByStreets(to_id, to_intersection_id);
 		ArrayList<Route> routes = new ArrayList<Route>();
 		if ((media & BUS) > 0) routes.addAll(searchBus(from_node, to_node));
 		if ((media & TRAIN) > 0) routes.addAll(searchTrain(from_node, to_node));
@@ -73,25 +77,23 @@ public class Route {
 		return routes;
 	}
 
-	private static ArrayList<Route> searchSubway(int fromNode,
-			int toNode) {
+	private static ArrayList<Route> searchSubway(Node fromNode,
+			Node toNode) {
+		ArrayList<Route> routes = new ArrayList<Route>();
+		//SQLiteDatabase database = Database.getInstance();
+		//Cursor cursor = database.rawQuery("SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ? AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ?)", new String[] { String.valueOf(streetId), String.valueOf(streetId2) });
+        return routes;
+	}
+
+	private static ArrayList<Route> searchTrain(Node fromNode,
+			Node toNode) {
 		ArrayList<Route> routes = new ArrayList<Route>();
 		return routes;
 	}
 
-	private static ArrayList<Route> searchTrain(int fromNode,
-			int toNode) {
+	private static ArrayList<Route> searchBus(Node fromNode,
+			Node toNode) {
 		ArrayList<Route> routes = new ArrayList<Route>();
 		return routes;
-	}
-
-	private static ArrayList<Route> searchBus(int fromNode,
-			int toNode) {
-		ArrayList<Route> routes = new ArrayList<Route>();
-		return routes;
-	}
-
-	private static int getNodeFromStreetIds(int id, int intersectionId) throws NodeNotFoundException {
-		throw new NodeNotFoundException();
 	}
 }
