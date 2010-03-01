@@ -2,9 +2,6 @@ package com.bondies.model;
 
 import java.util.ArrayList;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-
 
 public class Route {
 	final public static int BUS = 1; 
