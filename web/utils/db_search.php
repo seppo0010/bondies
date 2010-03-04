@@ -11,6 +11,21 @@ function get_node_from_street_ids($street1, $street2) {
 	return mysql_fetch_assoc($from_node_query);
 }
 
+function get_node_from_way_ids($way1, $way2) {
+    $consulta = <<< hereDoc
+        SELECT node.id, node.lat, node.lon
+        FROM node
+        INNER JOIN way_nodes ON way_nodes.node_id = node.id
+        WHERE way_nodes.way_id IN (%d, %d)
+        GROUP BY node.id, node.lat, node.lon
+        HAVING count(1) > 1
+hereDoc;
+    
+	$from_node_query = mysql_query(sprintf($consulta, (int)$way1, (int)$way2));
+	if (mysql_num_rows($from_node_query) == 0) return null;
+	return mysql_fetch_assoc($from_node_query);
+}
+
 function list_way_names_for_node_id($node_id) {
 	$ways_query = mysql_query('SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = ' . $node_id);
 	$ways = array();
@@ -78,7 +93,14 @@ function get_bus_info($bus_id) {
         return mysql_fetch_assoc($info);
 }
 
-function get_bus_ways($railway_id) {
-        // TODO: implement this, if necesary...
-        return array();
+function get_bus_ways($bus_id) {
+    $info = mysql_query('SELECT way_id, ordering FROM relation_ways WHERE relation_id = ' . (int)$bus_id) or die(mysql_error());
+    return mysql_fetch_assoc($info);
+}
+
+function get_bus_way_by_ordering($bus_id, $ordering) {
+    $info = mysql_query('SELECT way_id FROM relation_ways WHERE relation_id = ' . (int)$bus_id . ' and ordering = ' . (int)$ordering) or die(mysql_error());
+    if (mysql_num_rows($info) == 0) return null;
+    $tmp = mysql_fetch_row($info);
+    return $tmp[0];
 }
