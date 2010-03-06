@@ -39,10 +39,6 @@ public class Node {
 		return node;
 	}
 
-	public void calculateBox() {
-
-	}
-
 	public double calculateDistance(double _lat, double _lon) {
 		return calculateDistance(lat, lon, _lat, _lon);
 	}

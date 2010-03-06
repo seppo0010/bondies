@@ -11,4 +11,6 @@
 <string name="openSearch">Search</string>
 <string name="fromStreet">From Street</string>
 <string name="fromStreetIntersection">From Street Intersection</string>
+<string name="search">Search</string>
+<string name="node_not_found">Unable to find node</string>
 </resources>
