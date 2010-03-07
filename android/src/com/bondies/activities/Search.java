@@ -14,10 +14,15 @@ public class Search extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.search);
 		//["from_id"]=> string(4) "1280"  ["from_intersection_id"]=> string(4) "1587" ["to_id"]=> string(4) "1280" ["to_intersection_id"]=> string(4) "1583"
-		try {
-			Route.search(1280,1587,1280,1583,Route.SUBWAY);
-		} catch (NodeNotFoundException e) {
-			Toast.makeText(this, this.getString(R.string.node_not_found), Toast.LENGTH_SHORT);
-		}
+		final Activity activity = this;
+		(new Thread() {
+			public void run() {
+				try {
+					Route.search(1280,1587,1280,1583,Route.SUBWAY);
+				} catch (NodeNotFoundException e) {
+					Toast.makeText(activity, activity.getString(R.string.node_not_found), Toast.LENGTH_SHORT);
+				}
+			}
+		}).start();
 	}
 }

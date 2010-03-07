@@ -8,7 +8,7 @@ public class Database {
 
 	static public SQLiteDatabase getInstance() {
 		if (database == null)
-			database = SQLiteDatabase.openDatabase("/sdcard/bondies/sqlite.db", null, SQLiteDatabase.OPEN_READONLY);
+			database = SQLiteDatabase.openDatabase("/sdcard/bondies/sqlite.db", null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
 		return database;
 	}
 }

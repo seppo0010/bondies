@@ -7,6 +7,14 @@ public class Node {
 	private int nodeId;
 	private double lat;
 	private double lon;
+	private String railwayHaltName = null;
+
+	public Node(int nodeId, double lat, double lon, String railwayHaltName) {
+		this.nodeId = nodeId;
+		this.lat = lat;
+		this.lon = lon;
+		this.railwayHaltName = railwayHaltName;
+	}
 
 	public int getNodeId() {
 		return nodeId;
@@ -27,15 +35,26 @@ public class Node {
 		this.lon = lon;
 	}
 
+	public void setRailwayHaltName(String railwayHaltName) {
+		this.railwayHaltName = railwayHaltName;
+	}
+	public String getRailwayHaltName() {
+		return railwayHaltName == null ? "" : railwayHaltName;
+	}
 	public static Node getByStreets(int streetId, int streetId2) throws NodeNotFoundException {
 		SQLiteDatabase database = Database.getInstance();
-		Cursor cursor = database.rawQuery("SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ? AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ?)", new String[] { String.valueOf(streetId), String.valueOf(streetId2) });
+		Cursor cursor = database.rawQuery("SELECT node.id, node.lat, node.lon FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ? AND node.id IN (SELECT node.id FROM node LEFT JOIN way_nodes ON node.id = way_nodes.node_id LEFT JOIN way ON way_nodes.way_id = way.id LEFT JOIN street ON way.street_id = street.id WHERE street.id = ?) LIMIT 1", new String[] { String.valueOf(streetId), String.valueOf(streetId2) });
 		if (cursor.getCount() == 0) throw new NodeNotFoundException();
-		Node node = new Node();
 		cursor.moveToFirst();
-		node.setNodeId(cursor.getInt(0));
-		node.setLat(cursor.getDouble(1));
-		node.setLon(cursor.getDouble(2));
+		Node node = new Node(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2), null);
+		return node;
+	}
+	public static Node getById(int nodeId) throws NodeNotFoundException {
+		SQLiteDatabase database = Database.getInstance();
+		Cursor cursor = database.rawQuery("SELECT node.id, node.lat, node.lon FROM node WHERE node.id = ? LIMIT 1", new String[] { String.valueOf(nodeId) });
+		if (cursor.getCount() == 0) throw new NodeNotFoundException();
+		cursor.moveToFirst();
+		Node node = new Node(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2), null);
 		return node;
 	}
 
@@ -45,7 +64,7 @@ public class Node {
 
 	static public double calculateDistance(double _lat1, double _lon1, double _lat2, double _lon2) {
 		int unit = 6371;
-		double degreeRadius = 180.0 / Math.PI;
+		double degreeRadius = Math.PI / 180.0;
 
 		double lat_from  = _lat1 * degreeRadius;
 		double long_from = _lon1 * degreeRadius;
@@ -57,6 +76,9 @@ public class Node {
 		return (double) (unit * Math.acos(dist));
 	}
 
+	public Rectangle calculateBox(double wide) {
+		return Node.calculateBox(lat, lon, wide);
+	}
 	public static Rectangle calculateBox(double lat, double lon, double wide) {
 		Rectangle rectangle = new Rectangle();
         double lat_unit_distance = calculateDistance(lat, lon, lat + 1, lon);
