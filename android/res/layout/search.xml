@@ -2,9 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent" android:layout_height="wrap_content"
 	android:orientation="vertical">
-	<EditText android:text="" android:id="@+id/from_street"
+	<AutoCompleteTextView android:text="" android:id="@+id/from_street"
 		android:hint="@+string/fromStreet" android:layout_width="fill_parent"
-		android:layout_height="wrap_content"></EditText>
+		android:layout_height="wrap_content"></AutoCompleteTextView>
 	<AutoCompleteTextView android:id="@+id/from_street_intersection"
 		android:hint="@+string/fromStreetIntersection" android:layout_width="fill_parent"
 		android:layout_height="wrap_content"></AutoCompleteTextView>
