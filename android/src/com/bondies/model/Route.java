@@ -69,11 +69,9 @@ public class Route {
 		this.type = type;
 	}
 
-	public static ArrayList<Route> search(int from_id, int from_intersection_id, int to_id, int to_intersection_id, int media) throws NodeNotFoundException {
+	public static ArrayList<Route> search(Node from_node, Node to_node, int media) {
 		//["from_id"]=> string(4) "1280"  ["from_intersection_id"]=> string(4) "1587" ["to_id"]=> string(4) "1280" ["to_intersection_id"]=> string(4) "1583"
 		if (media == 0) return null;
-		Node from_node = Node.getById(256242075); //Node.getByStreets(from_id, from_intersection_id);
-		Node to_node = null;//Node.getByStreets(to_id, to_intersection_id);
 		ArrayList<Route> routes = new ArrayList<Route>();
 		if ((media & BUS) > 0) routes.addAll(searchBus(from_node, to_node));
 		if ((media & TRAIN) > 0) routes.addAll(searchTrain(from_node, to_node));

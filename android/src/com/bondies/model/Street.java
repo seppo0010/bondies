@@ -1,11 +1,15 @@
 package com.bondies.model;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public class Street {
+	final private static HashMap<Integer, SoftReference<Street>> cache = new HashMap<Integer, SoftReference<Street>>();
+
 	private int id;
 	private String name;
 	private String fullName;
@@ -14,6 +18,7 @@ public class Street {
 		this.id = id;
 		this.name = name;
 		this.fullName = fullName;
+		cache.put(id, new SoftReference<Street>(this));
 	}
 
 	public int getId() {
@@ -51,5 +56,15 @@ public class Street {
 		}
 		result.close();
 		return response;
+	}
+
+	public static Street getById(int streetId) {
+		if (cache.containsKey(streetId)) return cache.get(streetId).get();
+
+		SQLiteDatabase database = Database.getInstance();
+		Cursor cursor = database.rawQuery("SELECT * FROM street WHERE id = ?", new String[]{ String.valueOf(streetId) });
+		if (cursor.getCount() == 0) return null;
+		cursor.moveToFirst();
+		return new Street(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
 	}
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content" android:layout_height="wrap_content">
+	<EditText android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/criteria" />
+	<ListView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/android:list"
+		android:orientation="vertical" android:layout_below="@id/criteria">
+	</ListView>
+</RelativeLayout>

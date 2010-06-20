@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="wrap_content"
-	android:orientation="vertical">
-	<AutoCompleteTextView android:text="" android:id="@+id/from_street"
-		android:hint="@+string/fromStreet" android:layout_width="fill_parent"
-		android:layout_height="wrap_content"></AutoCompleteTextView>
-	<AutoCompleteTextView android:id="@+id/from_street_intersection"
-		android:hint="@+string/fromStreetIntersection" android:layout_width="fill_parent"
-		android:layout_height="wrap_content"></AutoCompleteTextView>
-</LinearLayout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
+	<Button android:layout_width="fill_parent" android:text="@string/change"
+		android:layout_height="wrap_content" android:id="@+id/fromStreet" />
+	<Button android:layout_width="fill_parent" android:text="@string/change"
+		android:layout_height="wrap_content" android:id="@+id/fromStreetIntersection"
+		android:layout_below="@id/fromStreet" />
+	<TextView android:id="@+id/fromOk" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/ok"
+		android:layout_below="@id/fromStreetIntersection" />
+	<Button android:layout_width="fill_parent" android:text="@string/change"
+		android:layout_height="wrap_content" android:id="@+id/toStreet"
+		android:layout_below="@id/fromOk" />
+	<Button android:layout_width="fill_parent" android:text="@string/change"
+		android:layout_height="wrap_content" android:id="@+id/toStreetIntersection"
+		android:layout_below="@id/toStreet" />
+	<TextView android:id="@+id/toOk" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:text="@string/ok"
+		android:layout_below="@id/toStreetIntersection" />
+	<Button android:layout_width="wrap_content" android:text="@string/search"
+		android:layout_height="wrap_content" android:id="@+id/search"
+		android:layout_below="@id/toOk" />
+</RelativeLayout>

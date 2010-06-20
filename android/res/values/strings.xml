@@ -13,4 +13,6 @@
 <string name="fromStreetIntersection">From Street Intersection</string>
 <string name="search">Search</string>
 <string name="node_not_found">Unable to find node</string>
+<string name="change">Change</string>
+<string name="ok">OK</string>
 </resources>

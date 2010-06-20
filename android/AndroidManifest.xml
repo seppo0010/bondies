@@ -18,6 +18,9 @@
         <activity android:name="com.bondies.activities.Search"
                   android:label="@string/search">
         </activity>
+        <activity android:name="com.bondies.activities.SelectStreet"
+                  android:label="@string/search">
+        </activity>
 
     </application>
     <uses-sdk android:minSdkVersion="3" />

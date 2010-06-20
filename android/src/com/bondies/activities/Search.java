@@ -2,96 +2,165 @@ package com.bondies.activities;
 
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.KeyEvent;
+import android.util.Log;
 import android.view.View;
-import android.view.View.OnKeyListener;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
+import android.view.Window;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.bondies.R;
+import com.bondies.model.Node;
 import com.bondies.model.NodeNotFoundException;
 import com.bondies.model.Route;
 import com.bondies.model.Street;
 
-public class Search extends Activity {
-	static private int AUTOCOMPLETE_DISPLAY = 10;
+public class Search extends Activity implements OnClickListener {
+	final static private int FROM_STREET= 1;
+	final static private int FROM_STREET_INTERSECTION = 2;
+	final static private int TO_STREET = 3;
+	final static private int TO_STREET_INTERSECTION = 4;
+	private Button changeStreetFrom;
+	private Street fromStreet;
+	private Button changeStreetIntersectionFrom;
+	private Street fromStreetIntersection;
+	private Node fromNode;
+	private View fromOk = null;
 
-	private AutoCompleteTextView fromStreet;
-	private ArrayAdapter<String> fromStreetAdapter;
-	private AutoCompleteTextView fromStreetIntersection;
-
-	private String lastSearch = null;
-	private Handler handler = new Handler();
-	private Runnable runnable = new Runnable() {
-		public void run() {
-			fromStreetAdapter.notifyDataSetChanged();
-			fromStreet.showDropDown();
-		}
-	};
-	private Timer refresh;
+	private Street toStreet;
+	private Button changeStreetTo;
+	private Street toStreetIntersection;
+	private Button changeStreetIntersectionTo;
+	private Node toNode;
+	private View toOk = null;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.search);
-		fromStreet = (AutoCompleteTextView) findViewById(R.id.from_street);
-		fromStreet.setOnKeyListener(new OnKeyListener() {
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				if (event.getAction() == KeyEvent.ACTION_UP) {
-					// We already have a small list of candidates, and it is still valid? awesome!
-					if (lastSearch != null && fromStreetAdapter.getCount() < AUTOCOMPLETE_DISPLAY && fromStreet.getText().toString().startsWith(lastSearch)) return false;
-					if (refresh != null) refresh.cancel();
-					refresh = new Timer();
-					refresh.schedule(new TimerTask() {
-						@Override
-						public void run() {
-							refreshAutocomplete(fromStreet);
-						}
-					}, 2000);
+		changeStreetFrom = (Button)findViewById(R.id.fromStreet);
+		changeStreetFrom.setOnClickListener(this);
+		changeStreetIntersectionFrom = (Button)findViewById(R.id.fromStreetIntersection);
+		changeStreetIntersectionFrom.setOnClickListener(this);
+		fromOk = findViewById(R.id.fromOk);
+		fromOk.setVisibility(View.INVISIBLE);
+
+		changeStreetTo = (Button)findViewById(R.id.toStreet);
+		changeStreetTo.setOnClickListener(this);
+		changeStreetIntersectionTo = (Button)findViewById(R.id.toStreetIntersection);
+		changeStreetIntersectionTo.setOnClickListener(this);
+		toOk = findViewById(R.id.toOk);
+		toOk.setVisibility(View.INVISIBLE);
+
+		Button search = (Button)findViewById(R.id.search);
+		search.setOnClickListener(new OnClickListener() {
+			final private Runnable fromOk = new Runnable() {
+				public void run() {
+					Search.this.fromOk.setVisibility(View.VISIBLE);
 				}
-				return false;
+			};
+			
+			final private Runnable toOk = new Runnable() {
+				public void run() {
+					Search.this.toOk.setVisibility(View.VISIBLE);
+				}
+			};
+			
+			public void onClick(View v) {
+				final Handler handler = new Handler();
+				Search.this.fromOk.setVisibility(View.INVISIBLE);
+				Search.this.toOk.setVisibility(View.INVISIBLE);
+				Search.this.setProgressBarIndeterminateVisibility(true);
+				new Thread() {
+					public void run() {
+						final ArrayList<Route> routes = new ArrayList<Route>();
+						if (fromStreet != null && fromStreetIntersection != null && toStreet != null && toStreetIntersection != null) {
+							if (validateFromNode()) {
+								handler.post(fromOk);
+								if (validateToNode()) {
+									handler.post(toOk);
+									routes.addAll(Route.search(fromNode, toNode, Route.SUBWAY));
+								}
+							}
+						}
+						handler.post(new Runnable() {
+							public void run() {
+								if (fromNode == null) Toast.makeText(Search.this, "From intersection not found", Toast.LENGTH_LONG).show();
+								else if (toNode == null) Toast.makeText(Search.this, "To intersection not found", Toast.LENGTH_LONG).show();
+								else {
+									Log.d("routes", routes.size() + " routes found");
+									Toast.makeText(Search.this, routes.size() + " routes found", Toast.LENGTH_LONG).show();
+								}
+								Search.this.setProgressBarIndeterminateVisibility(false);
+							}
+						});
+					}
+				}.start();
 			}
 		});
-		fromStreetAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line, new String[]{});
-		fromStreet.setAdapter(fromStreetAdapter);
-		fromStreetIntersection = (AutoCompleteTextView) findViewById(R.id.from_street_intersection);
-		//["from_id"]=> string(4) "1280"  ["from_intersection_id"]=> string(4) "1587" ["to_id"]=> string(4) "1280" ["to_intersection_id"]=> string(4) "1583"
 	}
 
-	private void refreshAutocomplete(AutoCompleteTextView field) {
-		refresh.cancel();
-		refresh = null;
-		if (field == fromStreet) {
-			String search = fromStreet.getText().toString();
-			if (search.length() == 0) return;
-			fromStreetAdapter.setNotifyOnChange(false);
-			fromStreetAdapter.clear();
-			ArrayList<Street> streets = Street.find(search, AUTOCOMPLETE_DISPLAY);
-			int c = streets.size();
-			for (int i = 0; i < c; i++) {
-				fromStreetAdapter.add(streets.get(i).getFullName());
+	public void onClick(View v) {
+		int requestCode = 0;
+		if (v == changeStreetFrom) requestCode = FROM_STREET;
+		else if (v == changeStreetIntersectionFrom) requestCode = FROM_STREET_INTERSECTION;
+		else if (v == changeStreetTo) requestCode = TO_STREET;
+		else if (v == changeStreetIntersectionTo) requestCode = TO_STREET_INTERSECTION;
+		if (requestCode == 0) return;
+		Intent intent = new Intent(Search.this, SelectStreet.class);
+		startActivityForResult(intent, requestCode);
+	}
+
+	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+		if (resultCode != Activity.RESULT_OK) return;
+		int streetId = data.getIntExtra("street_id", -1);
+		if (streetId > -1) {
+			Street street = Street.getById(streetId);
+			if (requestCode == FROM_STREET) {
+				fromStreet = street;
+				changeStreetFrom.setText(street.getName());
+				fromNode = null;
 			}
-			lastSearch = search;
-			handler.post(runnable);
+			else if (requestCode == FROM_STREET_INTERSECTION) {
+				fromStreetIntersection = street;
+				changeStreetIntersectionFrom.setText(street.getName());
+				fromNode = null;
+			}
+			else if (requestCode == TO_STREET) {
+				toStreet = street;
+				changeStreetTo.setText(street.getName());
+				toNode = null;
+			}
+			else if (requestCode == TO_STREET_INTERSECTION) {
+				toStreetIntersection = street;
+				changeStreetIntersectionTo.setText(street.getName());
+				toNode = null;
+			}
 		}
 	}
 
-	public void search() {
-		final Activity activity = this;
-		(new Thread() {
-			public void run() {
-				try {
-					Route.search(1280,1587,1280,1583,Route.SUBWAY);
-				} catch (NodeNotFoundException e) {
-					Toast.makeText(activity, activity.getString(R.string.node_not_found), Toast.LENGTH_SHORT);
-				}
-			}
-		}).start();
+	private boolean validateFromNode() {
+		try {
+			fromNode = Node.getByStreets(fromStreet.getId(), fromStreetIntersection.getId());
+			return true;
+		} catch (NodeNotFoundException e) {
+			fromNode = null;
+		}
+		return false;
+	}
+
+	private boolean validateToNode() {
+		try {
+			toNode = Node.getByStreets(toStreet.getId(), toStreetIntersection.getId());
+			return true;
+		} catch (NodeNotFoundException e) {
+			toNode = null;
+		}
+		return false;
 	}
 }

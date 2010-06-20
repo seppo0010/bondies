@@ -92,13 +92,13 @@ public class HttpRequestDownloader extends HttpRequest {
 //				if (httpStatus != 206) file.delete();
 				FileOutputStream output = new FileOutputStream(file);
 				InputStream input = resEntity.getContent();
-				int offset = 0;
+//				int offset = 0;
 				byte[] b = new byte[BUFFER_SIZE];
 				while (true) {
 					int read_size = input.read(b, 0, BUFFER_SIZE);
 					if (read_size == -1) break;
 					output.write(b, 0, read_size);
-					offset += BUFFER_SIZE;
+//					offset += BUFFER_SIZE;
 					updateRequestHandler.post(updateRequestRunnable);
 				}
 			} catch (Exception e) {
