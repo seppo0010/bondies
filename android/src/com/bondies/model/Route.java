@@ -2,6 +2,7 @@ package com.bondies.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -79,10 +80,8 @@ public class Route {
 		return routes;
 	}
 
-	private static ArrayList<Route> searchSubway(Node fromNode,
-			Node toNode) {
-		ArrayList<Route> routes = new ArrayList<Route>();
-		Rectangle box = fromNode.calculateBox(FROM_WALK_UP_TO);
+	private static HashMap<String, NodeRouteResult> searchSubwayHalt(Node searchNode, double walkUpTo) {
+		Rectangle box = searchNode.calculateBox(walkUpTo);
 		SQLiteDatabase database = Database.getInstance();
 		Cursor cursor = database.rawQuery("SELECT node.id, node.lat, node.lon, railway_halts.name FROM railway_halts JOIN node ON railway_halts.node_id = node.id AND node.lat > ? AND node.lat < ? AND node.lon > ? AND node.lon <  ?", new String[] { String.valueOf(box.x1), String.valueOf(box.x2), String.valueOf(box.y1), String.valueOf(box.y2) });
 		int c = cursor.getCount();
@@ -90,8 +89,8 @@ public class Route {
 		for (int i = 0; i < c; i++) {
 			cursor.moveToPosition(i);
 			Node node = new Node(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getString(3));
-			double distance = fromNode.calculateDistance(node.getLat(), node.getLon());
-			if (distance > FROM_WALK_UP_TO) continue;
+			double distance = searchNode.calculateDistance(node.getLat(), node.getLon());
+			if (distance > walkUpTo) continue;
 			Cursor wayCursor = database.rawQuery("SELECT way_id, NULL FROM way_nodes WHERE node_id = ?", new String[] { String.valueOf(node.getNodeId()) });
 			int d = wayCursor.getCount();
 			for (int j = 0; j < d; j++) {
@@ -101,22 +100,35 @@ public class Route {
 					fromNodes.put(wayId, new NodeRouteResult(node, distance, 0));
 				}
 			}
+			wayCursor.close();
 		}
-		Log.d("C", String.valueOf(fromNodes.size()));
+		cursor.close();
+		return fromNodes;
+	}
 
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242143
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242144
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242160
-		//SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = 
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242248
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242329
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242251
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256242253
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256244943
-		//SELECT way_id, NULL FROM way_nodes WHERE node_id = 256247262
-		//SELECT way.name, railway.operator FROM railway LEFT JOIN way ON railway.way_id = way.id WHERE railway.way_id = 26198543
-		//SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = 256242143
-		//SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = 256242251
+	private static ArrayList<Route> searchSubway(Node fromNode,
+			Node toNode) {
+		ArrayList<Route> routes = new ArrayList<Route>();
+		long start = System.currentTimeMillis();
+		HashMap<String, NodeRouteResult> from = searchSubwayHalt(fromNode, FROM_WALK_UP_TO);
+		HashMap<String, NodeRouteResult> to = searchSubwayHalt(fromNode, TO_WALK_UP_TO);
+
+		SQLiteDatabase database = Database.getInstance();
+		if (from.size() > 0 || to.size() > 0) {
+			Set<String> toWays = to.keySet();
+			for (String wayId : from.keySet()) {
+				if (toWays.contains(wayId)) {
+					Route route = new Route();
+					Cursor routeCursor = database.rawQuery("SELECT way.name, railway.operator FROM railway LEFT JOIN way ON railway.way_id = way.id WHERE railway.way_id = ?", new String[]{wayId});
+					routeCursor.moveToFirst();
+					route.setName(routeCursor.getString(0));
+					route.setOperator(routeCursor.getString(1));
+					route.type = SUBWAY;
+					routes.add(route);
+				}
+			}
+		}
+		Log.d("time", String.valueOf(System.currentTimeMillis() - start));
 
 		return routes;
 	}

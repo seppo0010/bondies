@@ -1,5 +1,7 @@
 package com.bondies.model;
 
+import java.util.ArrayList;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -90,5 +92,18 @@ public class Node {
         rectangle.y1 = lon - lon_delta;
         rectangle.y2 = lon + lon_delta;
 		return rectangle;
+	}
+
+	public ArrayList<String> getAllWayNames() {
+		SQLiteDatabase database = Database.getInstance();
+		Cursor waysCursor = database.rawQuery("SELECT DISTINCT way.name FROM node JOIN way_nodes ON node.id = way_nodes.node_id JOIN way ON way_nodes.way_id = way.id WHERE node.id = ?", new String[]{String.valueOf(getNodeId())});
+		int c = waysCursor.getCount();
+		ArrayList<String> ways = new ArrayList<String>();
+		for (int i = 0; i < c; i++) {
+			waysCursor.move(i+1);
+			ways.add(waysCursor.getString(0));
+		}
+		waysCursor.close();
+		return ways;
 	}
 }

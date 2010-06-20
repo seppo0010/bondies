@@ -79,11 +79,19 @@ public class Search extends Activity implements OnClickListener {
 				new Thread() {
 					public void run() {
 						final ArrayList<Route> routes = new ArrayList<Route>();
-						if (fromStreet != null && fromStreetIntersection != null && toStreet != null && toStreetIntersection != null) {
-							if (validateFromNode()) {
+						{
+//						if (fromStreet != null && fromStreetIntersection != null && toStreet != null && toStreetIntersection != null) {
+							{
+//							if (validateFromNode()) {
 								handler.post(fromOk);
-								if (validateToNode()) {
+//								if (validateToNode()) {
+								{
 									handler.post(toOk);
+									try {
+										fromNode = Node.getById(195573170);
+										toNode = Node.getById(195573170);
+									} catch (NodeNotFoundException e) {
+									}
 									routes.addAll(Route.search(fromNode, toNode, Route.SUBWAY));
 								}
 							}
