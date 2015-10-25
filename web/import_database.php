@@ -34,7 +34,7 @@ if ($keep_data === FALSE) {
 	//mysql_query('DROP TABLE relation_tags');
 	mysql_query('CREATE TABLE train ( id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, way_id BIGINT(20) UNSIGNED NOT NULL, operator VARCHAR(255), UNIQUE KEY way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error());
 	mysql_query('CREATE TABLE train_stations ( node_id BIGINT(20) PRIMARY KEY, name VARCHAR(255), INDEX node_id (node_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error());
-	mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255), INDEX relation_id (relation_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error()); 
+	mysql_query('CREATE TABLE bus ( relation_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(255), ref VARCHAR(255), operator VARCHAR(255), INDEX relation_id (relation_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error());
 	mysql_query('CREATE TABLE relation_nodes ( relation_id BIGINT(20) UNSIGNED NOT NULL, node_id BIGINT(20) UNSIGNED NOT NULL, INDEX relation_id (relation_id), INDEX node_id (node_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error());
 	mysql_query('CREATE TABLE relation_ways ( relation_id BIGINT(20) UNSIGNED NOT NULL, way_id BIGINT(20) UNSIGNED NOT NULL, ordering INT(1) UNSIGNED, INDEX relation_id (relation_id), INDEX way_id (way_id) ) DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci') or die(mysql_error());
 	//mysql_query('CREATE TABLE relation_tags ( relation_id BIGINT(20) UNSIGNED NOT NULL, field VARCHAR(255), value VARCHAR(255), UNIQUE KEY relation_key (relation_id, field, INDEX field (field), INDEX relation_id (relation_id)  )');
@@ -110,7 +110,7 @@ foreach ($simplexml as $node) {
 			foreach ($node->children() as $child) {
 				$is_subway = $is_rail = FALSE;
 				if ($child->getName() == 'nd') {
-					foreach ($child->attributes() as $key => $value) 
+					foreach ($child->attributes() as $key => $value)
 						if ($key == 'ref')
 							$nodes[] = (string)$value;
 				}
@@ -120,7 +120,7 @@ foreach ($simplexml as $node) {
 					$is_railway = FALSE;
 					$is_train = FALSE;
 					$is_operator = FALSE;
-					foreach ($child->attributes() as $key => $value) 
+					foreach ($child->attributes() as $key => $value)
 					{
 						if ($key == 'k' && $value == 'operator') $is_operator = TRUE;
 						if ($key == 'k' && $value == 'highway') $is_highway = TRUE;
@@ -151,22 +151,22 @@ foreach ($simplexml as $node) {
 		}
 	} else if ($node->getName() == 'relation') {
 		$relation_id = NULL;
-                foreach ($node->attributes() as $key => $value) {
-                        if ($key == 'id') $relation_id = $value;
-                }
+		foreach ($node->attributes() as $key => $value) {
+			if ($key == 'id') $relation_id = $value;
+		}
 		if ($relation_id !== NULL) {
 			$ways = $nodes = array();
 			$route = NULL;
 			$name = $operator = $from = $to = $ref = '';
-                        foreach ($node->children() as $child) {
-                                if ($child->getName() == 'member') {
+			foreach ($node->children() as $child) {
+				if ($child->getName() == 'member') {
 					$ref = $type = NULL;
-                                        foreach ($child->attributes() as $key => $value) {
-                                                if ($key == 'ref') $ref = (string)$value;
-                                                else if ($key == 'type') $type = (string)$value;
+					foreach ($child->attributes() as $key => $value) {
+						if ($key == 'ref') $ref = (string)$value;
+						else if ($key == 'type') $type = (string)$value;
 					}
 					if ($ref !== NULL && $type !== NULL && in_array($type, array('way', 'node'))) ${$type . 's'}[] = $ref;
-                                } else if ($child->getName() == 'tag') {
+				} else if ($child->getName() == 'tag') {
 					$k = $v = NULL;
 					foreach ($child->attributes() as $key => $value) {
 						${$key} = (string)$value;
